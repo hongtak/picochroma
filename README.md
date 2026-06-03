@@ -1,26 +1,26 @@
 # picochroma
 
-A ultra-lightweight, zero-dependency utility for adding vibrant ANSI colors, backgrounds, and text effects to your terminal logs.
+A tiny, zero-dependency terminal styling utility with a surprisingly rich feature set for its size.
 
-Instead of dealing with complex chaining or heavy dependencies, this package provides a single, flexible function that parses readable string styling formats—including full TrueColor 24-bit RGB and Hex codes.
+Instead of complex chaining, picochroma provides one flexible function that parses readable string styling formats, including named colors, backgrounds, text effects, RGB values, and hex colors.
 
 ## Key Advantages
 
 ### 1. Ultra-Lightweight & Zero Dependencies
 
-The entire library is a single, self-contained function under 100 lines of code. It introduces zero dependency bloat to a user's `node_modules`, making it perfect for CLI tools, microservices, and performance-critical applications.
+The library ships as a small, self-contained source file with zero runtime dependencies. It keeps dependency weight low while still covering the styling features most CLI tools need.
 
 ### 2. Micro-DSL (Domain Specific Language) API
 
-While many styling libraries use method chaining, this tool offers a flexible configuration approach by accepting a single, space-separated, human-readable string of modifiers (e.g., `'red bold underline'`).
+While many styling libraries use method chaining, this tool offers a configuration-friendly approach by accepting a single, space-separated, human-readable string of modifiers (e.g., `'red bold underline'`).
 
 - It is highly dynamic: you can easily pass styling strings from configuration files or environment variables without writing complex code logic.
 
 - It is forgiving: it seamlessly parses both spaces (`'red bold'`) and commas (`'red, bold'`).
 
-### 3. Full 24-Bit TrueColor Support (RGB & Hex)
+### 3. Rich Color Support in a Tiny API
 
-Many lightweight alternatives strip out RGB or Hex support to save space. This implementation includes a built-in Hex-to-RGB parser, giving developers access to 16 million+ colors for both foregrounds (`rgb(...)`) and backgrounds (`bgrgb(...)`) right out of the box.
+picochroma supports named colors, bright variants, backgrounds, text effects, RGB values, and hex colors through the same small API. Custom colors work for both foregrounds (`rgb(...)`) and backgrounds (`bgrgb(...)`).
 
 ### 4. Native ESM Support
 
@@ -28,15 +28,16 @@ Built cleanly using standard ES Modules (`export default`), ensuring it works fl
 
 ## Features
 
-- 🎨 **Named Colors** – 9 standard colors plus bright variants (Red, Green, Blue, Cyan, Magenta, Yellow, White, Gray, Black)
-- 🖼️ **Background Colors** – Full palette of background colors with bright variants
-- ✨ **Text Effects** – Bold, dim, italic, underline, blink, reverse, hidden, strikethrough
-- 🌈 **RGB & Hex Support** – Use custom RGB colors with `rgb(255,0,0)`, `rgb(#FF0000)`, or `rgb(FF0000)` for any color
-- 📉 **Smart Color Degradation** – RGB colors automatically degrade gracefully: 24-bit TrueColor → 256-color → 16-color, ensuring compatibility across all terminals
-- 🔧 **Simple API** – Human-readable DSL format using a single function
-- 📦 **Lightweight** – Under 3KB, zero dependencies, fast and efficient
-- 🚀 **ES Module** – Built with modern JavaScript, no semicolons
-- 🎯 **Auto-Detect Color Support** – Automatically detects terminal capabilities and adapts accordingly
+- **Named Colors** - Standard colors plus bright variants: red, green, blue, cyan, magenta, yellow, white, gray, black, and more
+- **Background Colors** - Background palette with standard and bright variants using the `bg-` prefix
+- **Text Effects** - Bold, dim, italic, underline, blink, reverse, hidden, and strikethrough
+- **RGB & Hex Support** - Use custom colors with `rgb(255,0,0)`, `rgb(#FF0000)`, or `rgb(FF0000)`
+- **RGB Backgrounds** - Apply custom background colors with `bgrgb(20,20,20)` or `bgrgb(#111827)`
+- **Smart Color Degradation** - RGB colors degrade from 24-bit TrueColor to 256-color to 16-color ANSI
+- **Simple DSL API** - Human-readable format strings like `bold rgb(#ff8800) bg-blue underline`
+- **Small Source** - A compact single-file implementation with zero runtime dependencies
+- **ES Module** - Native ESM export for modern Node.js and bundlers
+- **Auto-Detect Color Support** - Adapts to TTY output, `NO_COLOR`, `FORCE_COLOR`, and `COLORTERM`
 
 ## Color Support Detection & Degradation
 
