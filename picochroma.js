@@ -54,7 +54,12 @@ const colorSupport = getColorSupport();
 function hexToRgb(hex) {
   hex = hex.replace('#', '').toUpperCase();
   
-  // Validate hex format (must be 3 or 6 valid hex characters)
+  // Strictly validate: must be exactly 3 or 6 hex characters
+  if (hex.length !== 3 && hex.length !== 6) {
+    return null;
+  }
+  
+  // Validate hex format
   if (!hexRegex.test(hex)) {
     return null;
   }
@@ -75,10 +80,30 @@ function c(str, format = '') {
 
   const styles = [];
   const seen = new Set();
-  const parts = format.toLowerCase()
-                      .trim()
-                      .split(/\s+|,+/)
-                      .filter(Boolean);
+  
+  // Extract rgb() and bgrgb() patterns before splitting
+  const formatLower = format.toLowerCase().trim();
+  const parts = [];
+  let remaining = formatLower;
+  const rgbMatches = [];
+  
+  // Find all rgb(...) and bgrgb(...) patterns
+  const rgbRegexGlobal = /(?:bgrgb|rgb)\([^)]+\)/g;
+  let match;
+  while ((match = rgbRegexGlobal.exec(formatLower)) !== null) {
+    rgbMatches.push(match[0]);
+  }
+  
+  // Remove rgb/bgrgb patterns from the string before splitting
+  remaining = formatLower.replace(rgbRegexGlobal, '').trim();
+  
+  // Split the remaining part by spaces and commas
+  if (remaining) {
+    parts.push(...remaining.split(/\s+|,+/).filter(Boolean));
+  }
+  
+  // Add the extracted rgb/bgrgb patterns back
+  parts.push(...rgbMatches);
 
   for (const part of parts) {
     // Foreground colors: green, red, blue...
