@@ -23,11 +23,15 @@ const ansi = {
   },
 };
 
+const hexRegex = /^[0-9A-F]{3}(?:[0-9A-F]{3})?$/;
+const rgbRegex = /rgb\(([^\)]+)\)/;
+const bgrgbRegex = /bgrgb\(([^\)]+)\)/;
+
 function hexToRgb(hex) {
   hex = hex.replace('#', '').toUpperCase();
   
   // Validate hex format (must be 3 or 6 valid hex characters)
-  if (!/^[0-9A-F]{3}(?:[0-9A-F]{3})?$/.test(hex)) {
+  if (!hexRegex.test(hex)) {
     return null;
   }
   
@@ -77,7 +81,7 @@ function c(str, format = '') {
     }
     // RGB Text Color: rgb(255,0,0) or rgb(#FF0000)
     else if (part.startsWith('rgb(')) {
-      const match = part.match(/rgb\(([^\)]+)\)/);
+      const match = part.match(rgbRegex);
       if (match) {
         const value = match[1].trim();
         if (value.includes(',')) {
@@ -95,7 +99,7 @@ function c(str, format = '') {
     }
     // RGB Background: bgrgb(255,0,0) or bgrgb(#FF0000)
     else if (part.startsWith('bgrgb(')) {
-      const match = part.match(/bgrgb\(([^\)]+)\)/);
+      const match = part.match(bgrgbRegex);
       if (match) {
         const value = match[1].trim();
         if (value.includes(',')) {
