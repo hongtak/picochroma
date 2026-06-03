@@ -83,26 +83,29 @@ function c(str, format = '') {
   for (const part of parts) {
     // Foreground colors: green, red, blue...
     if (ansi.fg[part]) {
-      if (!seen.has(part)) {
+      const key = `fg:${part}`;
+      if (!seen.has(key)) {
         styles.push(ansi.fg[part]);
-        seen.add(part);
+        seen.add(key);
       }
     }
     // Background colors: only bg-red or bg_red
     else if (part.startsWith('bg-') || part.startsWith('bg_')) {
       const colorName = part.replace(/^bg[-_]/, '');
       if (ansi.bg[colorName]) {
-        if (!seen.has(colorName)) {
+        const key = `bg:${colorName}`;
+        if (!seen.has(key)) {
           styles.push(ansi.bg[colorName]);
-          seen.add(colorName);
+          seen.add(key);
         }
       }
     }
     // Effects: bold, underline, blink...
     else if (ansi.effect[part]) {
-      if (!seen.has(part)) {
+      const key = `effect:${part}`;
+      if (!seen.has(key)) {
         styles.push(ansi.effect[part]);
-        seen.add(part);
+        seen.add(key);
       }
     }
     // RGB Text Color: rgb(255,0,0) or rgb(#FF0000) - only if 24-bit supported
