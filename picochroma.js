@@ -1,27 +1,20 @@
-const ansi = {
-  reset: '\x1b[0m',
-
-  fg: {
-    black: '\x1b[30m', red: '\x1b[31m', green: '\x1b[32m', yellow: '\x1b[33m',
-    blue: '\x1b[34m', magenta: '\x1b[35m', cyan: '\x1b[36m', white: '\x1b[37m',
-    gray: '\x1b[90m',
-    'bright-black': '\x1b[90m', 'bright-red': '\x1b[91m', 'bright-green': '\x1b[92m', 'bright-yellow': '\x1b[93m',
-    'bright-blue': '\x1b[94m', 'bright-magenta': '\x1b[95m', 'bright-cyan': '\x1b[96m', 'bright-white': '\x1b[97m',
-  },
-
-  bg: {
-    black: '\x1b[40m', red: '\x1b[41m', green: '\x1b[42m', yellow: '\x1b[43m',
-    blue: '\x1b[44m', magenta: '\x1b[45m', cyan: '\x1b[46m', white: '\x1b[47m',
-    gray: '\x1b[100m',
-    'bright-black': '\x1b[100m', 'bright-red': '\x1b[101m', 'bright-green': '\x1b[102m', 'bright-yellow': '\x1b[103m',
-    'bright-blue': '\x1b[104m', 'bright-magenta': '\x1b[105m', 'bright-cyan': '\x1b[106m', 'bright-white': '\x1b[107m',
-  },
-
-  effect: {
-    bold: '\x1b[1m', dim: '\x1b[2m', italic: '\x1b[3m', underline: '\x1b[4m',
-    blink: '\x1b[5m', reverse: '\x1b[7m', hidden: '\x1b[8m', strikethrough: '\x1b[9m',
-  },
-}
+const ansi = { reset: '\x1b[0m' }
+const colors = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
+ansi.fg = {}
+ansi.bg = {}
+colors.forEach((c, i) => {
+  ansi.fg[c] = `\x1b[${30 + i}m`
+  ansi.bg[c] = `\x1b[${40 + i}m`
+  ansi.fg[`bright-${c}`] = `\x1b[${90 + i}m`
+  ansi.bg[`bright-${c}`] = `\x1b[${100 + i}m`
+})
+ansi.fg.gray = ansi.fg['bright-black']
+ansi.bg.gray = ansi.bg['bright-black']
+ansi.effect = {}
+const effects = [['bold', 1], ['dim', 2], ['italic', 3], ['underline', 4], ['blink', 5], ['reverse', 7], ['hidden', 8], ['strikethrough', 9]]
+effects.forEach(([e, c]) => {
+  ansi.effect[e] = `\x1b[${c}m`
+})
 
 const hexRegex = /^[0-9A-F]{3}(?:[0-9A-F]{3})?$/
 const rgbRegex = /rgb\(([^\)]+)\)/
@@ -43,7 +36,7 @@ function getColorSupport() {
   return { supported: true, truecolor: t, colors256: t || ct === '256color' }
 }
 
-const colorSupport = getColorSupport();
+const colorSupport = getColorSupport()
 
 function hexToRgb(hex) {
   hex = hex.replace('#', '').toUpperCase()
