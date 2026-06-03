@@ -27,6 +27,30 @@ const hexRegex = /^[0-9A-F]{3}(?:[0-9A-F]{3})?$/;
 const rgbRegex = /rgb\(([^\)]+)\)/;
 const bgrgbRegex = /bgrgb\(([^\)]+)\)/;
 
+// Color support detection
+function getColorSupport() {
+  if (typeof process === 'undefined' || !process.stdout) {
+    return { supported: true, truecolor: false };
+  }
+  
+  // Check explicit disable
+  if (process.env.NO_COLOR) return { supported: false, truecolor: false };
+  
+  // Check explicit enable
+  if (process.env.FORCE_COLOR) return { supported: true, truecolor: !!process.env.FORCE_COLOR };
+  
+  // Check if output is a TTY
+  if (!process.stdout.isTTY) return { supported: false, truecolor: false };
+  
+  // Check for 24-bit color support
+  const colorterm = process.env.COLORTERM || '';
+  const truecolor = colorterm === 'truecolor' || colorterm === '24bit';
+  
+  return { supported: true, truecolor };
+}
+
+const colorSupport = getColorSupport();
+
 function hexToRgb(hex) {
   hex = hex.replace('#', '').toUpperCase();
   
@@ -45,6 +69,9 @@ function hexToRgb(hex) {
 
 function c(str, format = '') {
   if (!format) return str;
+  
+  // Return plain text if colors aren't supported
+  if (!colorSupport.supported) return str;
 
   const styles = [];
   const seen = new Set();
@@ -78,8 +105,8 @@ function c(str, format = '') {
         seen.add(part);
       }
     }
-    // RGB Text Color: rgb(255,0,0) or rgb(#FF0000)
-    else if (part.startsWith('rgb(')) {
+    // RGB Text Color: rgb(255,0,0) or rgb(#FF0000) - only if 24-bit supported
+    else if (colorSupport.truecolor && part.startsWith('rgb(')) {
       const match = part.match(rgbRegex);
       if (match) {
         const value = match[1].trim();
@@ -96,8 +123,8 @@ function c(str, format = '') {
         }
       }
     }
-    // RGB Background: bgrgb(255,0,0) or bgrgb(#FF0000)
-    else if (part.startsWith('bgrgb(')) {
+    // RGB Background: bgrgb(255,0,0) or bgrgb(#FF0000) - only if 24-bit supported
+    else if (colorSupport.truecolor && part.startsWith('bgrgb(')) {
       const match = part.match(bgrgbRegex);
       if (match) {
         const value = match[1].trim();

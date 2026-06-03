@@ -35,6 +35,37 @@ Built cleanly using standard ES Modules (`export default`), ensuring it works fl
 - 🔧 **Simple API** – Human-readable DSL format using a single function
 - 📦 **Lightweight** – Minimal dependencies, fast and efficient
 - 🚀 **ES Module** – Built with modern JavaScript
+- 🎯 **Auto-Detect Color Support** – Automatically detects terminal capabilities and gracefully degrades
+
+## Color Support Detection
+
+Picochroma automatically detects terminal color capabilities and adapts gracefully:
+
+- **TTY Detection** – Returns plain text when output is piped (e.g., to a file or another process)
+- **NO_COLOR Support** – Respects the `NO_COLOR` environment variable to disable colors
+- **FORCE_COLOR Support** – Set `FORCE_COLOR=1` to force enable colors
+- **24-bit RGB Fallback** – RGB colors (`rgb()` and `bgrgb()`) only apply when `COLORTERM=truecolor` or `24bit` is detected; otherwise they're silently skipped
+
+### Environment Variables
+
+| Variable | Effect |
+|----------|--------|
+| `NO_COLOR` | Set to any value to disable all colors and return plain text |
+| `FORCE_COLOR` | Set to `1` to force enable colors (even when piped) |
+| `COLORTERM` | Set to `truecolor` or `24bit` to enable 24-bit RGB color support |
+
+### Examples
+
+```javascript
+import c from 'picochroma';
+
+// Auto-detection handles all of these:
+console.log(c('Styled text', 'bold red'));       // Works in terminal
+echo $(node script.js) > output.txt               // Plain text when piped
+NO_COLOR=1 node script.js                         // Plain text with NO_COLOR
+FORCE_COLOR=1 node script.js | cat                // Forced colors even when piped
+COLORTERM=truecolor node script.js                // Full 24-bit RGB support
+```
 
 ## Installation
 
