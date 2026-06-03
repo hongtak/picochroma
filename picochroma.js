@@ -21,157 +21,107 @@ const ansi = {
     bold: '\x1b[1m', dim: '\x1b[2m', italic: '\x1b[3m', underline: '\x1b[4m',
     blink: '\x1b[5m', reverse: '\x1b[7m', hidden: '\x1b[8m', strikethrough: '\x1b[9m',
   },
-};
+}
 
-const hexRegex = /^[0-9A-F]{3}(?:[0-9A-F]{3})?$/;
-const rgbRegex = /rgb\(([^\)]+)\)/;
-const bgrgbRegex = /bgrgb\(([^\)]+)\)/;
+const hexRegex = /^[0-9A-F]{3}(?:[0-9A-F]{3})?$/
+const rgbRegex = /rgb\(([^\)]+)\)/
+const bgrgbRegex = /bgrgb\(([^\)]+)\)/
+const fg16 = [30, 31, 32, 33, 34, 35, 36, 37, 90, 91, 92, 93, 94, 95, 96, 97]
+const bg16 = [40, 41, 42, 43, 44, 45, 46, 47, 100, 101, 102, 103, 104, 105, 106, 107]
 
-// Color support detection
 function getColorSupport() {
-  if (typeof process === 'undefined' || !process.stdout) {
-    return { supported: true, truecolor: false };
+  if (typeof process === 'undefined' || !process.stdout) return { supported: true, truecolor: false, colors256: false }
+  if (process.env.NO_COLOR) return { supported: false, truecolor: false, colors256: false }
+  if (process.env.FORCE_COLOR) {
+    const fc = process.env.FORCE_COLOR
+    const t = fc === true || fc === '1' || fc === '3'
+    return { supported: true, truecolor: t, colors256: fc === '256' || fc === '2' || t }
   }
-  
-  // Check explicit disable
-  if (process.env.NO_COLOR) return { supported: false, truecolor: false };
-  
-  // Check explicit enable
-  if (process.env.FORCE_COLOR) return { supported: true, truecolor: !!process.env.FORCE_COLOR };
-  
-  // Check if output is a TTY
-  if (!process.stdout.isTTY) return { supported: false, truecolor: false };
-  
-  // Check for 24-bit color support
-  const colorterm = process.env.COLORTERM || '';
-  const truecolor = colorterm === 'truecolor' || colorterm === '24bit';
-  
-  return { supported: true, truecolor };
+  if (!process.stdout.isTTY) return { supported: false, truecolor: false, colors256: false }
+  const ct = process.env.COLORTERM || ''
+  const t = ct === 'truecolor' || ct === '24bit'
+  return { supported: true, truecolor: t, colors256: t || ct === '256color' }
 }
 
 const colorSupport = getColorSupport();
 
 function hexToRgb(hex) {
-  hex = hex.replace('#', '').toUpperCase();
-  
-  // Strictly validate: must be exactly 3 or 6 hex characters
-  if (hex.length !== 3 && hex.length !== 6) {
-    return null;
+  hex = hex.replace('#', '').toUpperCase()
+  if ((hex.length !== 3 && hex.length !== 6) || !hexRegex.test(hex)) return null
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('')
+  const num = parseInt(hex, 16)
+  return isNaN(num) ? null : { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 }
+}
+
+function rgbTo256Color(r, g, b) {
+  if (r === g && g === b) return Math.round(r / 255 * 23) + 232
+  return 16 + (36 * Math.round(r / 255 * 5) + 6 * Math.round(g / 255 * 5) + Math.round(b / 255 * 5))
+}
+
+function rgbTo16Color(r, g, b) {
+  const c = [[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0], [0, 0, 128], [128, 0, 128],
+    [0, 128, 128], [192, 192, 192], [128, 128, 128], [255, 0, 0], [0, 255, 0],
+    [255, 255, 0], [0, 0, 255], [255, 0, 255], [0, 255, 255], [255, 255, 255]]
+  let d = Infinity, i = 0, x = 0
+  for (; i < c.length; i++) {
+    const dr = r - c[i][0], dg = g - c[i][1], db = b - c[i][2]
+    const t = dr * dr + dg * dg + db * db
+    if (t < d) { d = t; x = i }
   }
-  
-  // Validate hex format
-  if (!hexRegex.test(hex)) {
-    return null;
-  }
-  
-  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-  const num = parseInt(hex, 16);
-  
-  if (isNaN(num)) return null;
-  
-  return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+  return x
 }
 
 function c(str, format = '') {
-  if (!format) return str;
-  
-  // Return plain text if colors aren't supported
-  if (!colorSupport.supported) return str;
+  if (!format || !colorSupport.supported) return str
 
-  const styles = [];
-  const seen = new Set();
-  
-  // Extract rgb() and bgrgb() patterns before splitting
-  const formatLower = format.toLowerCase().trim();
-  const parts = [];
-  let remaining = formatLower;
-  const rgbMatches = [];
-  
-  // Find all rgb(...) and bgrgb(...) patterns
-  const rgbRegexGlobal = /(?:bgrgb|rgb)\([^)]+\)/g;
-  let match;
-  while ((match = rgbRegexGlobal.exec(formatLower)) !== null) {
-    rgbMatches.push(match[0]);
-  }
-  
-  // Remove rgb/bgrgb patterns from the string before splitting
-  remaining = formatLower.replace(rgbRegexGlobal, '').trim();
-  
-  // Split the remaining part by spaces and commas
-  if (remaining) {
-    parts.push(...remaining.split(/\s+|,+/).filter(Boolean));
-  }
-  
-  // Add the extracted rgb/bgrgb patterns back
-  parts.push(...rgbMatches);
+  const styles = [], seen = new Set()
+  const fl = format.toLowerCase().trim()
+  const rg = /(?:bgrgb|rgb)\([^)]+\)/g
+  const parts = fl.replace(rg, '').trim().split(/\s+|,+/).filter(Boolean)
+  for (const m of fl.matchAll(rg)) parts.push(m[0])
 
+  const a = n => { const k = n; if (seen.has(k)) return; seen.add(k) }
   for (const part of parts) {
-    // Foreground colors: green, red, blue...
-    if (ansi.fg[part]) {
-      const key = `fg:${part}`;
-      if (!seen.has(key)) {
-        styles.push(ansi.fg[part]);
-        seen.add(key);
-      }
-    }
-    // Background colors: only bg-red or bg_red
+    if (ansi.fg[part]) { a(`fg:${part}`); styles.push(ansi.fg[part]) }
     else if (part.startsWith('bg-') || part.startsWith('bg_')) {
-      const colorName = part.replace(/^bg[-_]/, '');
-      if (ansi.bg[colorName]) {
-        const key = `bg:${colorName}`;
-        if (!seen.has(key)) {
-          styles.push(ansi.bg[colorName]);
-          seen.add(key);
-        }
+      const cn = part.replace(/^bg[-_]/, '')
+      if (ansi.bg[cn]) { a(`bg:${cn}`); styles.push(ansi.bg[cn]) }
+    }
+    else if (ansi.effect[part]) { a(`ef:${part}`); styles.push(ansi.effect[part]) }
+    else if (part.startsWith('rgb(')) {
+      const v = part.match(rgbRegex)?.[1]?.trim()
+      let r, g, b
+      if (v?.includes(',')) {
+        const ps = v.split(',').map(n => parseInt(n.trim()))
+        if (ps.length === 3 && ps.every(n => !isNaN(n))) [r, g, b] = ps.map(x => Math.max(0, Math.min(255, x)))
+      } else {
+        const h = hexToRgb(v)
+        if (h) { r = h.r; g = h.g; b = h.b }
+      }
+      if (r !== undefined && g !== undefined && b !== undefined) {
+        const idx = rgbTo16Color(r, g, b)
+        const s = colorSupport.truecolor ? `\x1b[38;2;${r};${g};${b}m` : colorSupport.colors256 ? `\x1b[38;5;${rgbTo256Color(r, g, b)}m` : `\x1b[${fg16[idx]}m`
+        styles.push(s)
       }
     }
-    // Effects: bold, underline, blink...
-    else if (ansi.effect[part]) {
-      const key = `effect:${part}`;
-      if (!seen.has(key)) {
-        styles.push(ansi.effect[part]);
-        seen.add(key);
+    else if (part.startsWith('bgrgb(')) {
+      const v = part.match(bgrgbRegex)?.[1]?.trim()
+      let r, g, b
+      if (v?.includes(',')) {
+        const ps = v.split(',').map(n => parseInt(n.trim()))
+        if (ps.length === 3 && ps.every(n => !isNaN(n))) [r, g, b] = ps.map(x => Math.max(0, Math.min(255, x)))
+      } else {
+        const h = hexToRgb(v)
+        if (h) { r = h.r; g = h.g; b = h.b }
       }
-    }
-    // RGB Text Color: rgb(255,0,0) or rgb(#FF0000) - only if 24-bit supported
-    else if (colorSupport.truecolor && part.startsWith('rgb(')) {
-      const match = part.match(rgbRegex);
-      if (match) {
-        const value = match[1].trim();
-        if (value.includes(',')) {
-          const [r, g, b] = value.split(',').map(n => parseInt(n.trim()));
-          if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
-            styles.push(`\x1b[38;2;${r};${g};${b}m`);
-          }
-        } else {
-          const rgb = hexToRgb(value);
-          if (rgb) {
-            styles.push(`\x1b[38;2;${rgb.r};${rgb.g};${rgb.b}m`);
-          }
-        }
-      }
-    }
-    // RGB Background: bgrgb(255,0,0) or bgrgb(#FF0000) - only if 24-bit supported
-    else if (colorSupport.truecolor && part.startsWith('bgrgb(')) {
-      const match = part.match(bgrgbRegex);
-      if (match) {
-        const value = match[1].trim();
-        if (value.includes(',')) {
-          const [r, g, b] = value.split(',').map(n => parseInt(n.trim()));
-          if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
-            styles.push(`\x1b[48;2;${r};${g};${b}m`);
-          }
-        } else {
-          const rgb = hexToRgb(value);
-          if (rgb) {
-            styles.push(`\x1b[48;2;${rgb.r};${rgb.g};${rgb.b}m`);
-          }
-        }
+      if (r !== undefined && g !== undefined && b !== undefined) {
+        const idx = rgbTo16Color(r, g, b)
+        const s = colorSupport.truecolor ? `\x1b[48;2;${r};${g};${b}m` : colorSupport.colors256 ? `\x1b[48;5;${rgbTo256Color(r, g, b)}m` : `\x1b[${bg16[idx]}m`
+        styles.push(s)
       }
     }
   }
 
-  return styles.join('') + str + ansi.reset;
+  return styles.join('') + str + ansi.reset
 }
-
-export default c;
+export default c
