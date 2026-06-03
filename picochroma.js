@@ -24,9 +24,18 @@ const ansi = {
 };
 
 function hexToRgb(hex) {
-  hex = hex.replace('#', '');
+  hex = hex.replace('#', '').toUpperCase();
+  
+  // Validate hex format (must be 3 or 6 valid hex characters)
+  if (!/^[0-9A-F]{3}(?:[0-9A-F]{3})?$/.test(hex)) {
+    return null;
+  }
+  
   if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
   const num = parseInt(hex, 16);
+  
+  if (isNaN(num)) return null;
+  
   return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
 }
 
@@ -68,7 +77,9 @@ function c(str, format = '') {
           }
         } else {
           const rgb = hexToRgb(value);
-          styles.push(`\x1b[38;2;${rgb.r};${rgb.g};${rgb.b}m`);
+          if (rgb) {
+            styles.push(`\x1b[38;2;${rgb.r};${rgb.g};${rgb.b}m`);
+          }
         }
       }
     }
@@ -84,7 +95,9 @@ function c(str, format = '') {
           }
         } else {
           const rgb = hexToRgb(value);
-          styles.push(`\x1b[48;2;${rgb.r};${rgb.g};${rgb.b}m`);
+          if (rgb) {
+            styles.push(`\x1b[48;2;${rgb.r};${rgb.g};${rgb.b}m`);
+          }
         }
       }
     }
