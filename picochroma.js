@@ -119,6 +119,6 @@ function c(str, format = '') {
     }
   }
 
-  return styles.join('') + str + ansi.reset
+  return styles.length ? styles.join('') + str + ansi.reset : str
 }
 export default c
