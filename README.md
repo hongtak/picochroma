@@ -130,16 +130,16 @@ Bright versions: `bright-black`, `bright-red`, `bright-green`, `bright-yellow`, 
 
 ### Background Colors
 
-Use `bg-` or `bg_` prefix to apply background colors:
+Use the `bg-` prefix to apply background colors:
 
 ```javascript
 console.log(c('Red background', 'bg-red'))
-console.log(c('Green background', 'bg_green'))
+console.log(c('Green background', 'bg-green'))
 console.log(c('Blue background', 'bg-blue'))
 
 // Bright background colors
 console.log(c('Bright red background', 'bg-bright-red'))
-console.log(c('Bright green background', 'bg_bright-green'))
+console.log(c('Bright green background', 'bg-bright-green'))
 console.log(c('Bright blue background', 'bg-bright-blue'))
 ```
 
@@ -212,8 +212,8 @@ console.log(c('Another background', 'bgrgb(E0E0E0) black'))  // # is optional
 |-----------------|-------------------------------------|-----------------|-------|
 | Foreground Standard | `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `gray` | `c('Log', 'red')` | Supported on all terminals |
 | Foreground Bright | `bright-black`, `bright-red`, `bright-green`, `bright-yellow`, `bright-blue`, `bright-magenta`, `bright-cyan`, `bright-white` | `c('Log', 'bright-blue')` | Supported on all terminals |
-| Background Standard | Combine prefix `bg-` or `bg_` alongside any standard color token | `c('Log', 'bg-green')` | Supported on all terminals |
-| Background Bright | Combine prefix `bg-` or `bg_` alongside any bright color token | `c('Log', 'bg-bright-yellow')` | Supported on all terminals |
+| Background Standard | Combine prefix `bg-` alongside any standard color token | `c('Log', 'bg-green')` | Supported on all terminals |
+| Background Bright | Combine prefix `bg-` alongside any bright color token | `c('Log', 'bg-bright-yellow')` | Supported on all terminals |
 | Text Layout Effects | `bold`, `dim`, `italic`, `underline`, `blink`, `reverse`, `hidden`, `strikethrough` | `c('Log', 'bold underline')` | Support varies by terminal |
 | RGB Text | `rgb(R,G,B)` \| `rgb(#HEX)` \| `rgb(HEX)` | `rgb(255,100,0)`, `rgb(#FF5733)`, `rgb(FF5733)`, `rgb(#FFF)`, `rgb(FFF)` | Automatically degrades to 256-color or 16-color |
 | RGB Background | `bgrgb(R,G,B)` \| `bgrgb(#HEX)` \| `bgrgb(HEX)` | `bgrgb(0,0,0)`, `bgrgb(#112233)`, `bgrgb(112233)`, `bgrgb(#000)`, `bgrgb(000)` | Automatically degrades to 256-color or 16-color |
