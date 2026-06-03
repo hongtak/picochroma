@@ -49,9 +49,8 @@ function c(str, format = '') {
   const styles = [];
   const seen = new Set();
   const parts = format.toLowerCase()
-                      .replace(/,/g, ' ')
                       .trim()
-                      .split(/\s+/)
+                      .split(/\s+|,+/)
                       .filter(Boolean);
 
   for (const part of parts) {
