@@ -164,73 +164,15 @@ console.log(c('Another background', 'bgrgb(E0E0E0) black'));  // # is optional
 
 ## Supported Colors & Styles
 
-### Foreground Colors
-
-| Color | Usage |
-|-------|-------|
-| Black | `black` |
-| Red | `red` |
-| Green | `green` |
-| Yellow | `yellow` |
-| Blue | `blue` |
-| Magenta | `magenta` |
-| Cyan | `cyan` |
-| White | `white` |
-| Gray | `gray` |
-| Bright Black | `bright-black` |
-| Bright Red | `bright-red` |
-| Bright Green | `bright-green` |
-| Bright Yellow | `bright-yellow` |
-| Bright Blue | `bright-blue` |
-| Bright Magenta | `bright-magenta` |
-| Bright Cyan | `bright-cyan` |
-| Bright White | `bright-white` |
-
-### Background Colors
-
-| Color | Usage |
-|-------|-------|
-| Black | `bg-black` or `bg_black` |
-| Red | `bg-red` or `bg_red` |
-| Green | `bg-green` or `bg_green` |
-| Yellow | `bg-yellow` or `bg_yellow` |
-| Blue | `bg-blue` or `bg_blue` |
-| Magenta | `bg-magenta` or `bg_magenta` |
-| Cyan | `bg-cyan` or `bg_cyan` |
-| White | `bg-white` or `bg_white` |
-| Gray | `bg-gray` or `bg_gray` |
-| Bright Black | `bg-bright-black` or `bg_bright-black` |
-| Bright Red | `bg-bright-red` or `bg_bright-red` |
-| Bright Green | `bg-bright-green` or `bg_bright-green` |
-| Bright Yellow | `bg-bright-yellow` or `bg_bright-yellow` |
-| Bright Blue | `bg-bright-blue` or `bg_bright-blue` |
-| Bright Magenta | `bg-bright-magenta` or `bg_bright-magenta` |
-| Bright Cyan | `bg-bright-cyan` or `bg_bright-cyan` |
-| Bright White | `bg-bright-white` or `bg_bright-white` |
-
-### Text Effects
-
-| Effect | Usage |
-|--------|-------|
-| Bold | `bold` |
-| Dim | `dim` |
-| Italic | `italic` |
-| Underline | `underline` |
-| Blink | `blink` |
-| Reverse | `reverse` |
-| Hidden | `hidden` |
-| Strikethrough | `strikethrough` |
-
-### RGB Colors
-
-| Format | Example |
-|--------|----------|
-| Decimal RGB | `rgb(255,100,50)` |
-| Hex with # | `rgb(#FF6432)` |
-| Hex without # | `rgb(FF6432)` |
-| RGB Background (decimal) | `bgrgb(255,100,50)` |
-| RGB Background (hex with #) | `bgrgb(#FF6432)` |
-| RGB Background (hex without #) | `bgrgb(FF6432)` |
+| Styling Bracket | Token Identifiers / Syntax Patterns | Usage Blueprint |
+|-----------------|-------------------------------------|-----------------|
+| Foreground Standard | `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `gray` | `c('Log', 'red')` |
+| Foreground Bright | `bright-black`, `bright-red`, `bright-green`, `bright-yellow`, `bright-blue`, `bright-magenta`, `bright-cyan`, `bright-white` | `c('Log', 'bright-blue')` |
+| Background Standard | Combine prefix `bg-` or `bg_` alongside any standard color token | `c('Log', 'bg-green')` |
+| Background Bright | Combine prefix `bg-` or `bg_` alongside any bright color token | `c('Log', 'bg-bright-yellow')` |
+| Text Layout Effects | `bold`, `dim`, `italic`, `underline`, `blink`, `reverse`, `hidden`, `strikethrough` | `c('Log', 'bold underline')` |
+| TrueColor Text | `rgb(R,G,B)` \| `rgb(#HEX)` \| `rgb(#3HEX)` \| `rgb(HEX)` \| `rgb(3HEX)` | `rgb(255,100,0)`, `rgb(#FF5733)`, `rgb(#FFF)`, `rgb(FF5733)`, `rgb(FFF)` |
+| TrueColor Background | `bgrgb(R,G,B)` \| `bgrgb(#HEX)` \| `bgrgb(#3HEX)` \| `bgrgb(HEX)` \| `bgrgb(3HEX)` | `bgrgb(0,0,0)`, `bgrgb(#112233)`, `bgrgb(#000)`, `bgrgb(112233)`, `bgrgb(000)` |
 
 ## API
 
@@ -277,3 +219,7 @@ console.log(c('Name', 'bold white bg-blue') + ' | ' +
             c('Status', 'bold white bg-green') + ' | ' + 
             c('Progress', 'bold white bg-magenta'));
 ```
+
+## Maintainers
+
+- [Choi Hong Tak](https://github.com/hongtak)
