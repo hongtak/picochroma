@@ -17,8 +17,8 @@ effects.forEach(([e, c]) => {
 })
 
 const hexRegex = /^[0-9A-F]{3}(?:[0-9A-F]{3})?$/
-const rgbRegex = /rgb\(([^\)]+)\)/
-const bgrgbRegex = /bgrgb\(([^\)]+)\)/
+const rgbRegex = /^rgb\(([^\)]+)\)$/
+const bgrgbRegex = /^bgrgb\(([^\)]+)\)$/
 const fg16 = [30, 31, 32, 33, 34, 35, 36, 37, 90, 91, 92, 93, 94, 95, 96, 97]
 const bg16 = [40, 41, 42, 43, 44, 45, 46, 47, 100, 101, 102, 103, 104, 105, 106, 107]
 
@@ -88,9 +88,9 @@ function c(str, format = '') {
 
   const styles = [], seen = new Set()
   const fl = format.toLowerCase().trim()
-  const rg = /(?:bgrgb|rgb)\([^)]+\)/g
+  const rg = /(?:^|[\s,])((?:bgrgb|rgb)\([^)]+\))/g
   const parts = fl.replace(rg, '').trim().split(/\s+|,+/).filter(Boolean)
-  for (const m of fl.matchAll(rg)) parts.push(m[0])
+  for (const m of fl.matchAll(rg)) parts.push(m[1])
 
   for (const part of parts) {
     const key = part.replace(/^bg_/, 'bg-')
