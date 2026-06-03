@@ -43,6 +43,7 @@ function c(str, format = '') {
   if (!format) return str;
 
   const styles = [];
+  const seen = new Set();
   const parts = format.toLowerCase()
                       .replace(/,/g, ' ')
                       .trim()
@@ -52,18 +53,27 @@ function c(str, format = '') {
   for (const part of parts) {
     // Foreground colors: green, red, blue...
     if (ansi.fg[part]) {
-      styles.push(ansi.fg[part]);
+      if (!seen.has(part)) {
+        styles.push(ansi.fg[part]);
+        seen.add(part);
+      }
     }
     // Background colors: only bg-red or bg_red
     else if (part.startsWith('bg-') || part.startsWith('bg_')) {
       const colorName = part.replace(/^bg[-_]/, '');
       if (ansi.bg[colorName]) {
-        styles.push(ansi.bg[colorName]);
+        if (!seen.has(colorName)) {
+          styles.push(ansi.bg[colorName]);
+          seen.add(colorName);
+        }
       }
     }
     // Effects: bold, underline, blink...
     else if (ansi.effect[part]) {
-      styles.push(ansi.effect[part]);
+      if (!seen.has(part)) {
+        styles.push(ansi.effect[part]);
+        seen.add(part);
+      }
     }
     // RGB Text Color: rgb(255,0,0) or rgb(#FF0000)
     else if (part.startsWith('rgb(')) {
