@@ -93,25 +93,19 @@ function c(str, format = '') {
   for (const m of fl.matchAll(rg)) parts.push(m[0])
 
   for (const part of parts) {
+    if (seen.has(part)) continue
+    seen.add(part)
+    
     if (ansi.fg[part]) { 
-      const k = `fg:${part}`
-      if (seen.has(k)) continue
-      seen.add(k)
       styles.push(ansi.fg[part]) 
     }
     else if (part.startsWith('bg-') || part.startsWith('bg_')) {
       const cn = part.replace(/^bg[-_]/, '')
       if (ansi.bg[cn]) { 
-        const k = `bg:${cn}`
-        if (seen.has(k)) continue
-        seen.add(k)
         styles.push(ansi.bg[cn]) 
       }
     }
     else if (ansi.effect[part]) { 
-      const k = `ef:${part}`
-      if (seen.has(k)) continue
-      seen.add(k)
       styles.push(ansi.effect[part]) 
     }
     else if (part.startsWith('rgb(')) {
