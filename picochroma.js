@@ -64,6 +64,24 @@ function rgbTo16Color(r, g, b) {
   return x
 }
 
+function parseColor(part, regex, codes) {
+  const v = part.match(regex)?.[1]?.trim()
+  let r, g, b
+  if (v?.includes(',')) {
+    const ps = v.split(',').map(n => parseInt(n.trim()))
+    if (ps.length === 3 && ps.every(n => !isNaN(n))) [r, g, b] = ps.map(x => Math.max(0, Math.min(255, x)))
+  } else {
+    const h = hexToRgb(v)
+    if (h) { r = h.r; g = h.g; b = h.b }
+  }
+  if (r !== undefined && g !== undefined && b !== undefined) {
+    const idx = rgbTo16Color(r, g, b)
+    const isFg = codes === fg16
+    return colorSupport.truecolor ? (isFg ? `\x1b[38;2;${r};${g};${b}m` : `\x1b[48;2;${r};${g};${b}m`) : colorSupport.colors256 ? `\x1b[${isFg ? 38 : 48};5;${rgbTo256Color(r, g, b)}m` : `\x1b[${codes[idx]}m`
+  }
+  return null
+}
+
 function c(str, format = '') {
   if (!format || !colorSupport.supported) return str
 
@@ -82,36 +100,12 @@ function c(str, format = '') {
     }
     else if (ansi.effect[part]) { a(`ef:${part}`); styles.push(ansi.effect[part]) }
     else if (part.startsWith('rgb(')) {
-      const v = part.match(rgbRegex)?.[1]?.trim()
-      let r, g, b
-      if (v?.includes(',')) {
-        const ps = v.split(',').map(n => parseInt(n.trim()))
-        if (ps.length === 3 && ps.every(n => !isNaN(n))) [r, g, b] = ps.map(x => Math.max(0, Math.min(255, x)))
-      } else {
-        const h = hexToRgb(v)
-        if (h) { r = h.r; g = h.g; b = h.b }
-      }
-      if (r !== undefined && g !== undefined && b !== undefined) {
-        const idx = rgbTo16Color(r, g, b)
-        const s = colorSupport.truecolor ? `\x1b[38;2;${r};${g};${b}m` : colorSupport.colors256 ? `\x1b[38;5;${rgbTo256Color(r, g, b)}m` : `\x1b[${fg16[idx]}m`
-        styles.push(s)
-      }
+      const s = parseColor(part, rgbRegex, fg16)
+      if (s) styles.push(s)
     }
     else if (part.startsWith('bgrgb(')) {
-      const v = part.match(bgrgbRegex)?.[1]?.trim()
-      let r, g, b
-      if (v?.includes(',')) {
-        const ps = v.split(',').map(n => parseInt(n.trim()))
-        if (ps.length === 3 && ps.every(n => !isNaN(n))) [r, g, b] = ps.map(x => Math.max(0, Math.min(255, x)))
-      } else {
-        const h = hexToRgb(v)
-        if (h) { r = h.r; g = h.g; b = h.b }
-      }
-      if (r !== undefined && g !== undefined && b !== undefined) {
-        const idx = rgbTo16Color(r, g, b)
-        const s = colorSupport.truecolor ? `\x1b[48;2;${r};${g};${b}m` : colorSupport.colors256 ? `\x1b[48;5;${rgbTo256Color(r, g, b)}m` : `\x1b[${bg16[idx]}m`
-        styles.push(s)
-      }
+      const s = parseColor(part, bgrgbRegex, bg16)
+      if (s) styles.push(s)
     }
   }
 
