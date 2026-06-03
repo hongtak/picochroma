@@ -1,6 +1,6 @@
 {
   "name": "picochroma",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A ultra-lightweight, zero-dependency utility for adding vibrant ANSI colors, backgrounds, and text effects to your terminal logs.",
   "repository": "hongtak/picochroma",
   "license": "MIT",
