@@ -91,14 +91,28 @@ function c(str, format = '') {
   const parts = fl.replace(rg, '').trim().split(/\s+|,+/).filter(Boolean)
   for (const m of fl.matchAll(rg)) parts.push(m[0])
 
-  const a = n => { const k = n; if (seen.has(k)) return; seen.add(k) }
   for (const part of parts) {
-    if (ansi.fg[part]) { a(`fg:${part}`); styles.push(ansi.fg[part]) }
+    if (ansi.fg[part]) { 
+      const k = `fg:${part}`
+      if (seen.has(k)) continue
+      seen.add(k)
+      styles.push(ansi.fg[part]) 
+    }
     else if (part.startsWith('bg-') || part.startsWith('bg_')) {
       const cn = part.replace(/^bg[-_]/, '')
-      if (ansi.bg[cn]) { a(`bg:${cn}`); styles.push(ansi.bg[cn]) }
+      if (ansi.bg[cn]) { 
+        const k = `bg:${cn}`
+        if (seen.has(k)) continue
+        seen.add(k)
+        styles.push(ansi.bg[cn]) 
+      }
     }
-    else if (ansi.effect[part]) { a(`ef:${part}`); styles.push(ansi.effect[part]) }
+    else if (ansi.effect[part]) { 
+      const k = `ef:${part}`
+      if (seen.has(k)) continue
+      seen.add(k)
+      styles.push(ansi.effect[part]) 
+    }
     else if (part.startsWith('rgb(')) {
       const s = parseColor(part, rgbRegex, fg16)
       if (s) styles.push(s)
