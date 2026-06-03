@@ -93,20 +93,21 @@ function c(str, format = '') {
   for (const m of fl.matchAll(rg)) parts.push(m[0])
 
   for (const part of parts) {
-    if (seen.has(part)) continue
-    seen.add(part)
+    const key = part.replace(/^bg_/, 'bg-')
+    if (seen.has(key)) continue
+    seen.add(key)
     
-    if (ansi.fg[part]) { 
-      styles.push(ansi.fg[part]) 
+    if (ansi.fg[key]) { 
+      styles.push(ansi.fg[key]) 
     }
-    else if (part.startsWith('bg-') || part.startsWith('bg_')) {
-      const cn = part.replace(/^bg[-_]/, '')
+    else if (key.startsWith('bg-')) {
+      const cn = key.replace(/^bg-/, '')
       if (ansi.bg[cn]) { 
         styles.push(ansi.bg[cn]) 
       }
     }
-    else if (ansi.effect[part]) { 
-      styles.push(ansi.effect[part]) 
+    else if (ansi.effect[key]) { 
+      styles.push(ansi.effect[key]) 
     }
     else if (part.startsWith('rgb(')) {
       const s = parseColor(part, rgbRegex, fg16)
