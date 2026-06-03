@@ -24,14 +24,15 @@ const bg16 = [40, 41, 42, 43, 44, 45, 46, 47, 100, 101, 102, 103, 104, 105, 106,
 
 function getColorSupport() {
   if (typeof process === 'undefined' || !process.stdout) return { supported: true, truecolor: false, colors256: false }
-  if (process.env.NO_COLOR) return { supported: false, truecolor: false, colors256: false }
-  if (process.env.FORCE_COLOR) {
-    const fc = process.env.FORCE_COLOR
+  const env = process.env
+  if (env.NO_COLOR) return { supported: false, truecolor: false, colors256: false }
+  if (env.FORCE_COLOR) {
+    const fc = env.FORCE_COLOR
     const t = fc === true || fc === '1' || fc === '3'
     return { supported: true, truecolor: t, colors256: fc === '256' || fc === '2' || t }
   }
   if (!process.stdout.isTTY) return { supported: false, truecolor: false, colors256: false }
-  const ct = process.env.COLORTERM || ''
+  const ct = env.COLORTERM || ''
   const t = ct === 'truecolor' || ct === '24bit'
   return { supported: true, truecolor: t, colors256: t || ct === '256color' }
 }
