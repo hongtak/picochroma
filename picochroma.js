@@ -40,6 +40,7 @@ function getColorSupport() {
 const colorSupport = getColorSupport()
 
 function hexToRgb(hex) {
+  if (typeof hex !== 'string') return null
   hex = hex.replace('#', '').toUpperCase()
   if ((hex.length !== 3 && hex.length !== 6) || !hexRegex.test(hex)) return null
   if (hex.length === 3) hex = hex.split('').map(c => c + c).join('')
