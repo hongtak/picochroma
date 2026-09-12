@@ -161,6 +161,8 @@ console.log(c('Hidden text', 'hidden'))
 
 Combine multiple styles using spaces or commas:
 
+Styles apply from left to right. If colors conflict, the last color wins, including RGB colors.
+
 ```javascript
 console.log(c('Bold red text', 'bold red'))
 console.log(c('Bold green on white', 'bold green bg-white'))

@@ -87,16 +87,11 @@ function parseColor(part, regex, codes) {
 function c(str, format = '') {
   if (!format || !colorSupport.supported) return str
 
-  const styles = [], seen = new Set()
+  const styles = []
   const fl = format.toLowerCase().trim()
-  const rg = /(?:^|[\s,])((?:bgrgb|rgb)\([^)]+\))/g
-  const parts = fl.replace(rg, '').trim().split(/\s+|,+/).filter(Boolean)
-  for (const m of fl.matchAll(rg)) parts.push(m[1])
+  const parts = fl.match(/(?:bgrgb|rgb)\([^)]*\)|[^\s,]+/g) || []
 
   for (const part of parts) {
-    if (seen.has(part)) continue
-    seen.add(part)
-    
     if (ansi.fg[part]) { 
       styles.push(ansi.fg[part]) 
     }

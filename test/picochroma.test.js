@@ -30,6 +30,19 @@ test('outer styles resume after nested styled text', () => {
   )
 })
 
+test('styles preserve input order, including repeated colors and RGB commas', () => {
+  const cases = [
+    ['rgb(#f00) blue', '\x1b[38;2;255;0;0m\x1b[34m'],
+    ['blue rgb(#f00)', '\x1b[34m\x1b[38;2;255;0;0m'],
+    ['bgrgb(255, 0, 0), bg-blue', '\x1b[48;2;255;0;0m\x1b[44m'],
+    ['red blue red', '\x1b[31m\x1b[34m\x1b[31m'],
+    ['bold, rgb(1, 2, 3), underline', '\x1b[1m\x1b[38;2;1;2;3m\x1b[4m']
+  ]
+  for (const [format, opening] of cases) {
+    assert.equal(evaluate(`c('hello', ${JSON.stringify(format)})`), opening + 'hello\x1b[0m')
+  }
+})
+
 test('malformed RGB styles are ignored without throwing', () => {
   for (const format of ['rgb(', 'rgb()', 'bgrgb(', 'bgrgb()', 'rgb(nope)']) {
     assert.equal(evaluate(`c('hello', ${JSON.stringify(format)})`), 'hello')
