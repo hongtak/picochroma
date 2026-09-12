@@ -43,6 +43,18 @@ test('styles preserve input order, including repeated colors and RGB commas', ()
   }
 })
 
+test('FORCE_COLOR values select the documented color modes', () => {
+  for (const mode of ['true', '1', '3']) {
+    assert.equal(evaluate("c('hello', 'rgb(255, 0, 0)')", mode), '\x1b[38;2;255;0;0mhello\x1b[0m')
+  }
+  for (const mode of ['256', '2']) {
+    assert.equal(evaluate("c('hello', 'rgb(255, 0, 0)')", mode), '\x1b[38;5;196mhello\x1b[0m')
+  }
+  for (const mode of ['16', '0']) {
+    assert.equal(evaluate("c('hello', 'rgb(255, 0, 0)')", mode), '\x1b[91mhello\x1b[0m')
+  }
+})
+
 test('malformed RGB styles are ignored without throwing', () => {
   for (const format of ['rgb(', 'rgb()', 'bgrgb(', 'bgrgb()', 'rgb(nope)']) {
     assert.equal(evaluate(`c('hello', ${JSON.stringify(format)})`), 'hello')

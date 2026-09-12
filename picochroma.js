@@ -28,7 +28,7 @@ function getColorSupport() {
   if (env.NO_COLOR) return { supported: false, truecolor: false, colors256: false }
   if (env.FORCE_COLOR) {
     const fc = env.FORCE_COLOR
-    const t = fc === true || fc === '1' || fc === '3'
+    const t = fc === 'true' || fc === '1' || fc === '3'
     return { supported: true, truecolor: t, colors256: fc === '256' || fc === '2' || t }
   }
   if (!process.stdout.isTTY) return { supported: false, truecolor: false, colors256: false }
