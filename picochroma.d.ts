@@ -9,7 +9,19 @@
  * c('Success', 'green bold')
  * c('Custom color', 'rgb(#ff8800) bg-black')
  */
-export default function c(text: string, format?: string): string;
+declare const c: Colors;
+export default c;
+
+/** A reusable formatter for a single text value. */
+export type StyleFunction = (text: string) => string;
+
+/** A styling function with a reusable style factory. */
+export interface Colors {
+  /** Apply a format to text; the last conflicting color wins. */
+  (text: string, format?: string): string;
+  /** Parse a format once using this instance's color settings, then reuse it. */
+  style(format?: string): StyleFunction;
+}
 
 /** Automatic detection, disabled styling, or an explicit palette. */
 export type ColorLevel = 'auto' | 0 | 16 | 256 | 'truecolor';

@@ -215,3 +215,53 @@ test('invalid configuration fails clearly', () => {
     assert.match(message, /^(level|stream) must be/)
   }
 })
+
+test('reusable styles match direct calls across color levels and formats', () => {
+  assert.equal(evaluate(`(() => {
+    const formats = ['', 'unknown', 'constructor', 'rgb()', 'bold red',
+      'rgb(#f00) blue', 'red blue red', 'italic bgrgb(1, 2, 3) rgb(#abc)'];
+    for (const level of [0, 16, 256, 'truecolor']) {
+      const color = createColors({ level });
+      for (const format of formats) {
+        const reusable = color.style(format);
+        for (const text of ['', 'first', 'second', 'line 1\\nline 2', color('nested', 'blue') + ' tail']) {
+          if (reusable(text) !== color(text, format)) return false;
+        }
+      }
+    }
+    return true;
+  })()`), true)
+})
+
+test('default and detached reusable styles work as callbacks', () => {
+  assert.deepEqual(evaluate(`(() => {
+    const { style } = c;
+    const success = style('green bold');
+    return [['one', 'two'].map(success), c.style()('plain'), c.style('')('plain')];
+  })()`), [['\x1b[32m\x1b[1mone\x1b[0m', '\x1b[32m\x1b[1mtwo\x1b[0m'], 'plain', 'plain'])
+})
+
+test('reusable styles preserve instance detection and environment isolation', () => {
+  assert.deepEqual(evaluate(`(() => {
+    const output = c.style('red');
+    const errors = createColors({ stream: 'stderr' }).style('red');
+    const full = createColors({ level: 'truecolor' }).style('rgb(#f00)');
+    process.env.NO_COLOR = '1';
+    return [output('x'), errors('x'), full('x'), createColors().style('red')('x')];
+  })()`, null, { stderrTTY: true }), ['x', '\x1b[31mx\x1b[0m', '\x1b[38;2;255;0;0mx\x1b[0m', 'x'])
+})
+
+test('reusable styles compile the format once, not on each call', () => {
+  // Instrument parsing in an isolated child so performance behavior stays covered.
+  assert.deepEqual(evaluate(`(() => {
+    const original = String.prototype.toLowerCase;
+    let calls = 0;
+    String.prototype.toLowerCase = function () { calls++; return original.call(this); };
+    try {
+      const red = c.style('red');
+      const compiled = calls;
+      red('one'); red('two'); red('three');
+      return [compiled, calls];
+    } finally { String.prototype.toLowerCase = original; }
+  })()`), [1, 1])
+})

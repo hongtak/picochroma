@@ -37,5 +37,16 @@ c('Hello', ['bold', 'red'])
 c('Hello', null)
 // @ts-expect-error The function returns text, not a number.
 const wrong: number = c('Hello', 'red')
-// @ts-expect-error No style factory is exposed by this API.
-c.style('red')
+const success = c.style('green bold')
+const successText: string = success('Done')
+const reusable: (text: string) => string = instance.style('rgb(#f00)')
+const unstyled: string = c.style()('Plain')
+const mapped: string[] = ['one', 'two'].map(success)
+// @ts-expect-error Reusable styles require a text argument.
+success()
+// @ts-expect-error Reusable styles accept string text only.
+success(42)
+// @ts-expect-error The style factory accepts a format string.
+c.style(['red'])
+// @ts-expect-error Reusable functions return strings.
+const wrongReusable: number = success('Done')

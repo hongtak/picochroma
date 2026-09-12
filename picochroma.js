@@ -91,8 +91,8 @@ function parseColor(part, regex, codes, colorSupport) {
   return null
 }
 
-function styleText(colorSupport, str, format = '') {
-  if (!format || !colorSupport.supported) return str
+function compileStyle(colorSupport, format = '') {
+  if (!format || !colorSupport.supported) return ''
 
   const styles = []
   const fl = format.toLowerCase().trim()
@@ -121,8 +121,11 @@ function styleText(colorSupport, str, format = '') {
     }
   }
 
-  if (!styles.length) return str
-  const opening = styles.join('')
+  return styles.join('')
+}
+
+function applyStyle(opening, str) {
+  if (!opening) return str
   return opening + String(str).split(ansi.reset).join(ansi.reset + opening) + ansi.reset
 }
 export function createColors({ level = 'auto', stream = 'stdout' } = {}) {
@@ -135,7 +138,12 @@ export function createColors({ level = 'auto', stream = 'stdout' } = {}) {
   const colorSupport = level === 'auto'
     ? getColorSupport(typeof process === 'undefined' ? undefined : process[stream])
     : { supported: level !== 0, truecolor: level === 'truecolor', colors256: level === 256 || level === 'truecolor' }
-  return (text, format) => styleText(colorSupport, text, format)
+  const color = (text, format) => applyStyle(compileStyle(colorSupport, format), text)
+  color.style = (format = '') => {
+    const opening = compileStyle(colorSupport, format)
+    return text => applyStyle(opening, text)
+  }
+  return color
 }
 
 const c = createColors()

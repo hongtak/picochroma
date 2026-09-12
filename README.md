@@ -247,6 +247,28 @@ The signature is `c(text: string, format?: string): string`. Format strings rema
 
 Contributors can run `npm ci` followed by `npm test` to run runtime tests and strict type checks for NodeNext and bundler module resolution. TypeScript is a development dependency only; picochroma still has no runtime dependencies.
 
+### `c.style(format?)`
+
+Parse a format once and reuse the returned `(text: string) => string` function:
+
+```javascript
+import c, { createColors } from 'picochroma'
+
+const success = c.style('green bold')
+console.log(success('Build complete'))
+console.log(success('Tests passed'))
+
+const errorColor = createColors({ stream: 'stderr' })
+const error = errorColor.style('red bold')
+console.error(error('Build failed'))
+
+const labels = ['Ready', 'Running'].map(success)
+```
+
+Reusable styles use their parent instance's color settings. Format parsing and RGB conversion happen when `.style()` is called, so subsequent calls only apply the compiled styling. Output follows the same rules as direct calls, including nested styles, color precedence, and disabled output. An omitted, empty, or unrecognized format returns text unchanged.
+
+Both the default export and every `createColors()` instance expose `.style()`. The returned formatter takes text only; create another formatter to use a different format. TypeScript users can import the `Colors` and `StyleFunction` types.
+
 ### `createColors(options?)`
 
 Create an independent styling function with the same `c(text, format)` signature:
