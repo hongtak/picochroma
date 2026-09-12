@@ -161,3 +161,8 @@ test('16-color conversion preserves reference ANSI colors for foregrounds and ba
     assert.deepEqual(actual, palette.map((_, i) => `\x1b[${(i < 8 ? 30 + i : 90 + i - 8) + (background ? 10 : 0)}mx\x1b[0m`))
   }
 })
+
+test('three levels of nesting restore each enclosing style across multiline text', () => {
+  assert.equal(evaluate("c('outer ' + c('middle ' + c('inner', 'blue') + '\\n middle', 'green') + ' outer', 'red bold')"),
+    '\x1b[31m\x1b[1mouter \x1b[32mmiddle \x1b[34minner\x1b[0m\x1b[31m\x1b[1m\x1b[32m\n middle\x1b[0m\x1b[31m\x1b[1m outer\x1b[0m')
+})
