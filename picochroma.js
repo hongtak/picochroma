@@ -32,9 +32,11 @@ function getColorSupport() {
     return { supported: true, truecolor: t, colors256: fc === '256' || fc === '2' || t }
   }
   if (!process.stdout.isTTY) return { supported: false, truecolor: false, colors256: false }
-  const ct = env.COLORTERM || ''
-  const t = ct === 'truecolor' || ct === '24bit'
-  return { supported: true, truecolor: t, colors256: t || ct === '256color' }
+  const term = (env.TERM || '').toLowerCase()
+  if (term === 'dumb') return { supported: false, truecolor: false, colors256: false }
+  const ct = (env.COLORTERM || '').toLowerCase()
+  const t = ct === 'truecolor' || ct === '24bit' || /(?:^|-)(?:direct|truecolor|24bit)$/.test(term)
+  return { supported: true, truecolor: t, colors256: t || ct === '256color' || /(?:^|-)256color$/.test(term) }
 }
 
 const colorSupport = getColorSupport()

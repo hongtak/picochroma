@@ -91,3 +91,31 @@ test('hex forms, decimal RGB, clamping and case-insensitive formats', () => {
     Array(4).fill('\x1b[38;2;255;0;0mx\x1b[0m'))
   assert.equal(evaluate("c('x', ' BOLD, bgrgb(#AbC) ')"), '\x1b[1m\x1b[48;2;170;187;204mx\x1b[0m')
 })
+
+test('TTY detection recognizes TERM and COLORTERM color capabilities', () => {
+  const cases = [
+    [{}, '\x1b[91m'],
+    [{ TERM: 'xterm' }, '\x1b[91m'],
+    [{ TERM: 'xterm-256color' }, '\x1b[38;5;196m'],
+    [{ TERM: 'screen-256color' }, '\x1b[38;5;196m'],
+    [{ TERM: 'tmux-256color' }, '\x1b[38;5;196m'],
+    [{ TERM: 'xterm-direct' }, '\x1b[38;2;255;0;0m'],
+    [{ COLORTERM: '256color' }, '\x1b[38;5;196m'],
+    [{ COLORTERM: 'truecolor', TERM: 'xterm-256color' }, '\x1b[38;2;255;0;0m'],
+    [{ COLORTERM: '24bit' }, '\x1b[38;2;255;0;0m'],
+    [{ COLORTERM: 'TRUECOLOR' }, '\x1b[38;2;255;0;0m']
+  ]
+  for (const [env, opening] of cases) {
+    assert.equal(evaluate("c('x', 'rgb(#f00)')", null, { tty: true, env }), opening + 'x\x1b[0m')
+  }
+})
+
+test('disabled output and explicit overrides take precedence over detection', () => {
+  const expression = "c('x', 'rgb(#f00)')"
+  assert.equal(evaluate(expression, null, { tty: true, env: { TERM: 'dumb', COLORTERM: 'truecolor' } }), 'x')
+  assert.equal(evaluate(expression, null, { env: { TERM: 'xterm-256color', COLORTERM: 'truecolor' } }), 'x')
+  assert.equal(evaluate(expression, '1', { env: { TERM: 'dumb' } }), '\x1b[38;2;255;0;0mx\x1b[0m')
+  assert.equal(evaluate(expression, '16', { tty: true, env: { COLORTERM: 'truecolor' } }), '\x1b[91mx\x1b[0m')
+  assert.equal(evaluate(expression, '1', { env: { NO_COLOR: '0' } }), 'x')
+  assert.equal(evaluate(expression, '1', { env: { NO_COLOR: '' } }), '\x1b[38;2;255;0;0mx\x1b[0m')
+})

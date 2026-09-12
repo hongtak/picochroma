@@ -49,6 +49,9 @@ Picochroma automatically detects terminal color capabilities and intelligently d
 - **NO_COLOR Support** – Respects the `NO_COLOR` environment variable to disable all colors
 - **FORCE_COLOR Support** – Set `FORCE_COLOR=1` (or `256` or `true`) to force enable colors
 - **COLORTERM Detection** – Reads `COLORTERM` environment variable to detect color level
+- **TERM Detection** – Recognizes `*-256color` and `*-direct`/`*-truecolor`/`*-24bit`; `TERM=dumb` disables automatic styling
+
+Detection uses stdout at module import time. Non-empty `NO_COLOR` takes precedence over `FORCE_COLOR`; an empty `NO_COLOR` does not disable styling. Without a force override, piped stdout and `TERM=dumb` return plain text. stderr is not detected separately.
 
 ### Color Degradation Pipeline
 
@@ -80,12 +83,17 @@ c('text', 'rgb(255, 100, 50)')  // → 16-color: \x1b[33m (bright yellow)
 
 | Variable | Value | Effect |
 |----------|-------|--------|
-| `NO_COLOR` | any | Disables all colors, returns plain text |
+| `NO_COLOR` | non-empty | Disables all colors, returns plain text |
 | `FORCE_COLOR` | `1` or `true` | Force enable 24-bit TrueColor |
 | `FORCE_COLOR` | `256` or `2` | Force enable 256-color mode |
 | `FORCE_COLOR` | `16` or `0` | Force enable 16-color mode |
 | `COLORTERM` | `truecolor` or `24bit` | Enable 24-bit TrueColor |
 | `COLORTERM` | `256color` | Enable 256-color mode |
+| `TERM` | `*-256color` | Enable 256-color mode on a TTY |
+| `TERM` | `*-direct`, `*-truecolor`, `*-24bit` | Enable TrueColor on a TTY |
+| `TERM` | `dumb` | Disable automatic styling unless forced |
+
+For compatibility, picochroma keeps its existing force values: `1`, `3`, and `true` select TrueColor, and `0` selects 16 colors. These values differ from Node.js's own `FORCE_COLOR` convention. Use non-empty `NO_COLOR` to disable styling.
 
 ### Examples
 
