@@ -12,6 +12,13 @@ function evaluate(expression, forceColor = '1') {
   return JSON.parse(result.stdout)
 }
 
+test('inherited property names are ignored as unknown styles', () => {
+  for (const format of ['constructor', '__proto__', 'bg-constructor', 'bg-__proto__']) {
+    assert.equal(evaluate(`c('hello', ${JSON.stringify(format)})`), 'hello')
+  }
+  assert.equal(evaluate("c('hello', 'constructor bold')"), '\x1b[1mhello\x1b[0m')
+})
+
 test('malformed RGB styles are ignored without throwing', () => {
   for (const format of ['rgb(', 'rgb()', 'bgrgb(', 'bgrgb()', 'rgb(nope)']) {
     assert.equal(evaluate(`c('hello', ${JSON.stringify(format)})`), 'hello')

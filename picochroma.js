@@ -1,7 +1,7 @@
 const ansi = { reset: '\x1b[0m' }
 const colors = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
-ansi.fg = {}
-ansi.bg = {}
+ansi.fg = Object.create(null)
+ansi.bg = Object.create(null)
 colors.forEach((c, i) => {
   ansi.fg[c] = `\x1b[${30 + i}m`
   ansi.bg[c] = `\x1b[${40 + i}m`
@@ -10,7 +10,7 @@ colors.forEach((c, i) => {
 })
 ansi.fg.gray = ansi.fg['bright-black']
 ansi.bg.gray = ansi.bg['bright-black']
-ansi.effect = {}
+ansi.effect = Object.create(null)
 const effects = [['bold', 1], ['dim', 2], ['italic', 3], ['underline', 4], ['blink', 5], ['reverse', 7], ['hidden', 8], ['strikethrough', 9]]
 effects.forEach(([e, c]) => {
   ansi.effect[e] = `\x1b[${c}m`
