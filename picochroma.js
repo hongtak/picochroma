@@ -119,6 +119,8 @@ function c(str, format = '') {
     }
   }
 
-  return styles.length ? styles.join('') + str + ansi.reset : str
+  if (!styles.length) return str
+  const opening = styles.join('')
+  return opening + String(str).split(ansi.reset).join(ansi.reset + opening) + ansi.reset
 }
 export default c

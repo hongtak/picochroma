@@ -19,6 +19,17 @@ test('inherited property names are ignored as unknown styles', () => {
   assert.equal(evaluate("c('hello', 'constructor bold')"), '\x1b[1mhello\x1b[0m')
 })
 
+test('outer styles resume after nested styled text', () => {
+  assert.equal(
+    evaluate("c('before ' + c('inside', 'blue') + ' after', 'red bold')"),
+    '\x1b[31m\x1b[1mbefore \x1b[34minside\x1b[0m\x1b[31m\x1b[1m after\x1b[0m'
+  )
+  assert.equal(
+    evaluate("c(c('one', 'blue') + ' middle ' + c('two', 'green') + ' end', 'red')"),
+    '\x1b[31m\x1b[34mone\x1b[0m\x1b[31m middle \x1b[32mtwo\x1b[0m\x1b[31m end\x1b[0m'
+  )
+})
+
 test('malformed RGB styles are ignored without throwing', () => {
   for (const format of ['rgb(', 'rgb()', 'bgrgb(', 'bgrgb()', 'rgb(nope)']) {
     assert.equal(evaluate(`c('hello', ${JSON.stringify(format)})`), 'hello')
