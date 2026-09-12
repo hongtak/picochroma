@@ -233,6 +233,20 @@ console.log(c('Another background', 'bgrgb(E0E0E0) black'))  // # is optional
 
 ## API
 
+### TypeScript
+
+TypeScript declarations are included; no separate `@types` package is needed.
+
+```typescript
+import c from 'picochroma'
+
+const message: string = c('Success', 'green bold')
+```
+
+The signature is `c(text: string, format?: string): string`. Format strings remain flexible so styles can come from configuration, including RGB and hex values. Editor documentation describes the parameters and return value.
+
+Contributors can run `npm ci` followed by `npm test` to run runtime tests and strict type checks for NodeNext and bundler module resolution. TypeScript is a development dependency only; picochroma still has no runtime dependencies.
+
 ### `c(text, format)`
 
 Styles the given text with the specified format.
