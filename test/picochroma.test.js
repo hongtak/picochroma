@@ -2,11 +2,15 @@ import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import test from 'node:test'
 
-function evaluate(expression, forceColor = '1') {
-  const env = { ...process.env, FORCE_COLOR: forceColor }
-  delete env.NO_COLOR
+function evaluate(expression, forceColor = '1', options = {}) {
+  const env = { ...process.env }
+  for (const key of ['NO_COLOR', 'FORCE_COLOR', 'COLORTERM', 'TERM']) delete env[key]
+  if (forceColor !== null) env.FORCE_COLOR = forceColor
+  Object.assign(env, options.env)
   const result = spawnSync(process.execPath, ['--input-type=module', '-e',
-    `import c from ${JSON.stringify(new URL('../picochroma.js', import.meta.url).href)}; process.stdout.write(JSON.stringify(${expression}));`
+    `process.stdout.isTTY = ${Boolean(options.tty)};
+     const { default: c } = await import(${JSON.stringify(new URL('../picochroma.js', import.meta.url).href)});
+     process.stdout.write(JSON.stringify(${expression}));`
   ], { env, encoding: 'utf8' })
   assert.equal(result.status, 0, result.stderr)
   return JSON.parse(result.stdout)
@@ -60,4 +64,30 @@ test('malformed RGB styles are ignored without throwing', () => {
     assert.equal(evaluate(`c('hello', ${JSON.stringify(format)})`), 'hello')
   }
   assert.equal(evaluate("c('hello', 'red rgb()')"), '\x1b[31mhello\x1b[0m')
+})
+
+
+test('all named foregrounds, backgrounds, bright colors and effects', () => {
+  const colors = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
+  const cases = colors.flatMap((color, i) => [
+    [color, 30 + i], ['bg-' + color, 40 + i],
+    ['bright-' + color, 90 + i], ['bg-bright-' + color, 100 + i]
+  ])
+  cases.push(['gray', 90], ['bg-gray', 100], ['bold', 1], ['dim', 2],
+    ['italic', 3], ['underline', 4], ['blink', 5], ['reverse', 7],
+    ['hidden', 8], ['strikethrough', 9])
+  const actual = evaluate(`${JSON.stringify(cases)}.map(([format]) => c('x', format))`)
+  assert.deepEqual(actual, cases.map(([, code]) => `\x1b[${code}mx\x1b[0m`))
+})
+
+test('plain output for omitted, empty, unknown formats and piped output', () => {
+  assert.deepEqual(evaluate("[c('x'), c('x', ''), c('x', 'unknown'), c('x', ' , ')]"), ['x', 'x', 'x', 'x'])
+  assert.equal(evaluate("c('x', 'red bold')", null), 'x')
+  assert.equal(evaluate("c('x', 'red')", '1', { env: { NO_COLOR: '1' }, tty: true }), 'x')
+})
+
+test('hex forms, decimal RGB, clamping and case-insensitive formats', () => {
+  assert.deepEqual(evaluate("['rgb(#f00)', 'RGB(FF0000)', 'rgb(255, 0, 0)', 'rgb(999, -1, 0)'].map(f => c('x', f))"),
+    Array(4).fill('\x1b[38;2;255;0;0mx\x1b[0m'))
+  assert.equal(evaluate("c('x', ' BOLD, bgrgb(#AbC) ')"), '\x1b[1m\x1b[48;2;170;187;204mx\x1b[0m')
 })
