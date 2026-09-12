@@ -51,7 +51,7 @@ Picochroma automatically detects terminal color capabilities and intelligently d
 - **COLORTERM Detection** – Reads `COLORTERM` environment variable to detect color level
 - **TERM Detection** – Recognizes `*-256color` and `*-direct`/`*-truecolor`/`*-24bit`; `TERM=dumb` disables automatic styling
 
-Detection uses stdout at module import time. Non-empty `NO_COLOR` takes precedence over `FORCE_COLOR`; an empty `NO_COLOR` does not disable styling. Without a force override, piped stdout and `TERM=dumb` return plain text. stderr is not detected separately.
+The default function detects stdout at module import time. Non-empty `NO_COLOR` takes precedence over `FORCE_COLOR`; an empty `NO_COLOR` does not disable styling. Without a force override, piped stdout and `TERM=dumb` return plain text. Use `createColors({ stream: 'stderr' })` to detect stderr separately.
 
 ### Color Degradation Pipeline
 
@@ -246,6 +246,35 @@ const message: string = c('Success', 'green bold')
 The signature is `c(text: string, format?: string): string`. Format strings remain flexible so styles can come from configuration, including RGB and hex values. Editor documentation describes the parameters and return value.
 
 Contributors can run `npm ci` followed by `npm test` to run runtime tests and strict type checks for NodeNext and bundler module resolution. TypeScript is a development dependency only; picochroma still has no runtime dependencies.
+
+### `createColors(options?)`
+
+Create an independent styling function with the same `c(text, format)` signature:
+
+```javascript
+import c, { createColors } from 'picochroma'
+
+const plain = createColors({ level: 0 })
+const ansi = createColors({ level: 16 })
+const indexed = createColors({ level: 256 })
+const full = createColors({ level: 'truecolor' })
+const errorColor = createColors({ stream: 'stderr' })
+
+console.log(plain('No styling', 'bold red'))
+console.log(full('Custom color', 'rgb(#ff8800)'))
+console.error(errorColor('Error', 'red bold'))
+```
+
+| Option | Values | Default |
+|--------|--------|---------|
+| `level` | `'auto'`, `0` (disabled), `16`, `256`, `'truecolor'` | `'auto'` |
+| `stream` | `'stdout'`, `'stderr'` | `'stdout'` |
+
+Explicit levels override `NO_COLOR`, `FORCE_COLOR`, terminal detection, and pipe detection. `level: 0` adds no styling. Automatic mode follows the environment rules described above for the selected stream. The function returns text; `stream` only selects detection and does not print anything.
+
+Detection is captured when `createColors()` is called. Create another instance to pick up later environment or stream changes. Instances do not change the default function or each other. Invalid level or stream values throw `TypeError`.
+
+TypeScript users can import `ColorOptions` and `ColorLevel` as types alongside `createColors`.
 
 ### `c(text, format)`
 

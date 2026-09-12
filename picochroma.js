@@ -22,8 +22,8 @@ const bgrgbRegex = /^bgrgb\(([^\)]+)\)$/
 const fg16 = [30, 31, 32, 33, 34, 35, 36, 37, 90, 91, 92, 93, 94, 95, 96, 97]
 const bg16 = [40, 41, 42, 43, 44, 45, 46, 47, 100, 101, 102, 103, 104, 105, 106, 107]
 
-function getColorSupport() {
-  if (typeof process === 'undefined' || !process.stdout) return { supported: true, truecolor: false, colors256: false }
+function getColorSupport(stream) {
+  if (typeof process === 'undefined' || !stream) return { supported: true, truecolor: false, colors256: false }
   const env = process.env
   if (env.NO_COLOR) return { supported: false, truecolor: false, colors256: false }
   if (env.FORCE_COLOR) {
@@ -31,7 +31,7 @@ function getColorSupport() {
     const t = fc === 'true' || fc === '1' || fc === '3'
     return { supported: true, truecolor: t, colors256: fc === '256' || fc === '2' || t }
   }
-  if (!process.stdout.isTTY) return { supported: false, truecolor: false, colors256: false }
+  if (!stream.isTTY) return { supported: false, truecolor: false, colors256: false }
   const term = (env.TERM || '').toLowerCase()
   if (term === 'dumb') return { supported: false, truecolor: false, colors256: false }
   const ct = (env.COLORTERM || '').toLowerCase()
@@ -39,7 +39,6 @@ function getColorSupport() {
   return { supported: true, truecolor: t, colors256: t || ct === '256color' || /(?:^|-)256color$/.test(term) }
 }
 
-const colorSupport = getColorSupport()
 
 function hexToRgb(hex) {
   if (typeof hex !== 'string') return null
@@ -74,7 +73,7 @@ function rgbTo16Color(r, g, b) {
   return x
 }
 
-function parseColor(part, regex, codes) {
+function parseColor(part, regex, codes, colorSupport) {
   const v = part.match(regex)?.[1]?.trim()
   let r, g, b
   if (v?.includes(',')) {
@@ -92,7 +91,7 @@ function parseColor(part, regex, codes) {
   return null
 }
 
-function c(str, format = '') {
+function styleText(colorSupport, str, format = '') {
   if (!format || !colorSupport.supported) return str
 
   const styles = []
@@ -113,11 +112,11 @@ function c(str, format = '') {
       styles.push(ansi.effect[part]) 
     }
     else if (part.startsWith('rgb(')) {
-      const s = parseColor(part, rgbRegex, fg16)
+      const s = parseColor(part, rgbRegex, fg16, colorSupport)
       if (s) styles.push(s)
     }
     else if (part.startsWith('bgrgb(')) {
-      const s = parseColor(part, bgrgbRegex, bg16)
+      const s = parseColor(part, bgrgbRegex, bg16, colorSupport)
       if (s) styles.push(s)
     }
   }
@@ -126,4 +125,18 @@ function c(str, format = '') {
   const opening = styles.join('')
   return opening + String(str).split(ansi.reset).join(ansi.reset + opening) + ansi.reset
 }
+export function createColors({ level = 'auto', stream = 'stdout' } = {}) {
+  if (![ 'auto', 0, 16, 256, 'truecolor' ].includes(level)) {
+    throw new TypeError('level must be auto, 0, 16, 256, or truecolor')
+  }
+  if (stream !== 'stdout' && stream !== 'stderr') {
+    throw new TypeError('stream must be stdout or stderr')
+  }
+  const colorSupport = level === 'auto'
+    ? getColorSupport(typeof process === 'undefined' ? undefined : process[stream])
+    : { supported: level !== 0, truecolor: level === 'truecolor', colors256: level === 256 || level === 'truecolor' }
+  return (text, format) => styleText(colorSupport, text, format)
+}
+
+const c = createColors()
 export default c

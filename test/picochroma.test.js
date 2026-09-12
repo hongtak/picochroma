@@ -9,7 +9,8 @@ function evaluate(expression, forceColor = '1', options = {}) {
   Object.assign(env, options.env)
   const result = spawnSync(process.execPath, ['--input-type=module', '-e',
     `process.stdout.isTTY = ${Boolean(options.tty)};
-     const { default: c } = await import(${JSON.stringify(new URL('../picochroma.js', import.meta.url).href)});
+     process.stderr.isTTY = ${Boolean(options.stderrTTY)};
+     const { default: c, createColors } = await import(${JSON.stringify(new URL('../picochroma.js', import.meta.url).href)});
      process.stdout.write(JSON.stringify(${expression}));`
   ], { env, encoding: 'utf8' })
   assert.equal(result.status, 0, result.stderr)
@@ -165,4 +166,52 @@ test('16-color conversion preserves reference ANSI colors for foregrounds and ba
 test('three levels of nesting restore each enclosing style across multiline text', () => {
   assert.equal(evaluate("c('outer ' + c('middle ' + c('inner', 'blue') + '\\n middle', 'green') + ' outer', 'red bold')"),
     '\x1b[31m\x1b[1mouter \x1b[32mmiddle \x1b[34minner\x1b[0m\x1b[31m\x1b[1m\x1b[32m\n middle\x1b[0m\x1b[31m\x1b[1m outer\x1b[0m')
+})
+
+test('explicit levels override the environment and keep instances independent', () => {
+  const result = evaluate(`(() => {
+    const plain = createColors({ level: 0 });
+    const ansi = createColors({ level: 16 });
+    const indexed = createColors({ level: 256 });
+    const full = createColors({ level: 'truecolor' });
+    return [plain('x', 'bold red'), ansi('x', 'rgb(#f00) bgrgb(#000)'),
+      indexed('x', 'rgb(#f00) bgrgb(#000)'), full('x', 'rgb(#f00) bgrgb(#000)'),
+      plain('x', 'red'), c('x', 'red')];
+  })()`, '1', { env: { NO_COLOR: '1', TERM: 'dumb' } })
+  assert.deepEqual(result, ['x', '\x1b[91m\x1b[40mx\x1b[0m',
+    '\x1b[38;5;196m\x1b[48;5;16mx\x1b[0m', '\x1b[38;2;255;0;0m\x1b[48;2;0;0;0mx\x1b[0m', 'x', 'x'])
+})
+
+test('automatic instances detect stdout and stderr independently', () => {
+  const expression = "[c('x', 'red'), createColors()('x', 'red'), createColors({ stream: 'stderr' })('x', 'red')]"
+  assert.deepEqual(evaluate(expression, null, { tty: false, stderrTTY: true }), ['x', 'x', '\x1b[31mx\x1b[0m'])
+  assert.deepEqual(evaluate(expression, null, { tty: true, stderrTTY: false }), ['\x1b[31mx\x1b[0m', '\x1b[31mx\x1b[0m', 'x'])
+  assert.deepEqual(evaluate(expression, null, { tty: true, stderrTTY: true, env: { NO_COLOR: '1' } }), ['x', 'x', 'x'])
+})
+
+test('automatic configuration is captured when each instance is created', () => {
+  assert.deepEqual(evaluate(`(() => {
+    const first = createColors();
+    process.env.NO_COLOR = '1';
+    const second = createColors();
+    return [first('x', 'red'), second('x', 'red'), c('x', 'red')];
+  })()`), ['\x1b[31mx\x1b[0m', 'x', '\x1b[31mx\x1b[0m'])
+})
+
+test('configured functions preserve format handling and nested styles', () => {
+  assert.deepEqual(evaluate(`(() => {
+    const color = createColors({ level: 'truecolor' });
+    return [color('x'), color('x', 'rgb()'), color('x', 'constructor'),
+      color('a ' + color('b', 'blue') + ' c', 'red'), color('x', 'rgb(#f00) blue')];
+  })()`, null), ['x', 'x', 'x', '\x1b[31ma \x1b[34mb\x1b[0m\x1b[31m c\x1b[0m', '\x1b[38;2;255;0;0m\x1b[34mx\x1b[0m'])
+})
+
+test('invalid configuration fails clearly', () => {
+  const errors = evaluate(`[ { level: 24 }, { level: false }, { level: null }, { stream: 'stdin' }, { stream: null } ].map(options => {
+    try { createColors(options); return null; } catch (error) { return [error.name, error.message]; }
+  })`)
+  for (const [name, message] of errors) {
+    assert.equal(name, 'TypeError')
+    assert.match(message, /^(level|stream) must be/)
+  }
 })
