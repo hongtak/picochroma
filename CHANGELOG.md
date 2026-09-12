@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0 — 2026-09-12
+
+- Add `createColors({ level, stream })` for independent color configuration and stdout/stderr detection. Explicit levels override environment detection.
+- Add `.style(format)` to default and configured functions for reusable formatters that parse styles once.
+- Include TypeScript declarations and consumer type checks for NodeNext and bundler resolution.
+- Detect color capabilities from `TERM`, including plain output for `TERM=dumb` in automatic mode.
+- Choose the nearest fixed xterm cube or grayscale color for 256-color output, preserving exact black and white.
+- Expand runtime coverage to 23 test groups and add CI across Linux, macOS, Windows, and Node 22/24/26.
+- Preserve the existing default function signature and documented `FORCE_COLOR` values. No runtime dependencies added.
+
 ## 1.0.7 — 2026-09-12
 
 - Ignore malformed RGB styles without throwing.
