@@ -51,8 +51,14 @@ function hexToRgb(hex) {
 }
 
 function rgbTo256Color(r, g, b) {
-  if (r === g && g === b) return Math.round(r / 255 * 23) + 232
-  return 16 + (36 * Math.round(r / 255 * 5) + 6 * Math.round(g / 255 * 5) + Math.round(b / 255 * 5))
+  const levels = [0, 95, 135, 175, 215, 255]
+  const nearest = value => value < 48 ? 0 : value < 115 ? 1 : Math.min(5, Math.floor((value - 115) / 40) + 2)
+  const ri = nearest(r), gi = nearest(g), bi = nearest(b)
+  const cubeDistance = (r - levels[ri]) ** 2 + (g - levels[gi]) ** 2 + (b - levels[bi]) ** 2
+  const grayIndex = Math.max(0, Math.min(23, Math.round(((r + g + b) / 3 - 8) / 10)))
+  const gray = 8 + grayIndex * 10
+  const grayDistance = (r - gray) ** 2 + (g - gray) ** 2 + (b - gray) ** 2
+  return grayDistance < cubeDistance ? 232 + grayIndex : 16 + 36 * ri + 6 * gi + bi
 }
 
 function rgbTo16Color(r, g, b) {

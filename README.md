@@ -41,7 +41,7 @@ Built cleanly using standard ES Modules (`export default`), ensuring it works fl
 
 ## Color Support Detection & Degradation
 
-Picochroma automatically detects terminal color capabilities and intelligently degrades RGB colors to maintain visual quality:
+Picochroma automatically detects terminal color capabilities and intelligently degrades RGB colors using the default xterm palette:
 
 ### Terminal Capability Detection
 
@@ -58,10 +58,10 @@ Detection uses stdout at module import time. Non-empty `NO_COLOR` takes preceden
 RGB colors (`rgb()` and `bgrgb()`) automatically degrade based on terminal capabilities:
 
 1. **24-bit TrueColor** – Full 16.7M colors using `\x1b[38;2;r;g;b;m` format (best quality)
-   - Available when `COLORTERM=truecolor` or `24bit`
+   - Available when `COLORTERM=truecolor` or `24bit`, or a direct-color `TERM` is detected
    
 2. **256-Color Palette** – Intelligently maps RGB to the nearest color in the 216-color cube plus 24-level grayscale
-   - Available when `COLORTERM=256color` or when TrueColor is detected
+   - Available when `COLORTERM=256color` or `TERM` ends in `-256color`
    
 3. **16-Color ANSI** – Finds the closest standard ANSI color using Euclidean distance
    - Always available as a fallback
@@ -73,11 +73,13 @@ RGB colors (`rgb()` and `bgrgb()`) automatically degrade based on terminal capab
 c('text', 'rgb(255, 100, 50)')  // → Full RGB: \x1b[38;2;255;100;50m
 
 // Terminal with 256-color support  
-c('text', 'rgb(255, 100, 50)')  // → 256-color: \x1b[38;5;214m (closest match)
+c('text', 'rgb(255, 100, 50)')  // → 256-color: \x1b[38;5;203m (closest match)
 
 // Terminal with only 16-color support
-c('text', 'rgb(255, 100, 50)')  // → 16-color: \x1b[33m (bright yellow)
+c('text', 'rgb(255, 100, 50)')  // → 16-color: \x1b[91m (bright red)
 ```
+
+The 256-color conversion compares the nearest cube color with the nearest grayscale entry using squared RGB distance. It uses fixed entries 16–255; entries 0–15 can be customized by the terminal. Palette customization can still affect displayed colors.
 
 ### Environment Variables
 

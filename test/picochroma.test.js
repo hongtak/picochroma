@@ -119,3 +119,45 @@ test('disabled output and explicit overrides take precedence over detection', ()
   assert.equal(evaluate(expression, '1', { env: { NO_COLOR: '0' } }), 'x')
   assert.equal(evaluate(expression, '1', { env: { NO_COLOR: '' } }), '\x1b[38;2;255;0;0mx\x1b[0m')
 })
+
+test('256-color conversion preserves every fixed palette color exactly', () => {
+  const levels = [0, 95, 135, 175, 215, 255]
+  const palette = []
+  for (const r of levels) for (const g of levels) for (const b of levels) palette.push([r, g, b])
+  for (let value = 8; value <= 238; value += 10) palette.push([value, value, value])
+  for (const background of [false, true]) {
+    const prefix = background ? 'bgrgb' : 'rgb'
+    const actual = evaluate(`${JSON.stringify(palette)}.map(rgb => c('x', '${prefix}(' + rgb.join(',') + ')'))`, '256')
+    assert.deepEqual(actual, palette.map((_, i) => `\x1b[${background ? 48 : 38};5;${16 + i}mx\x1b[0m`))
+  }
+})
+
+test('256-color conversion chooses a nearest fixed palette entry for arbitrary RGB', () => {
+  const levels = [0, 95, 135, 175, 215, 255]
+  const palette = []
+  for (const r of levels) for (const g of levels) for (const b of levels) palette.push([r, g, b])
+  for (let value = 8; value <= 238; value += 10) palette.push([value, value, value])
+  const samples = [[0, 0, 0], [255, 255, 255], [100, 101, 102], [47, 115, 195], [48, 114, 194]]
+  for (let r = 0; r <= 255; r += 17) for (let g = 0; g <= 255; g += 17) for (let b = 0; b <= 255; b += 17) samples.push([r, g, b])
+  // Generate the grid inside the child to stay below Windows command-line limits.
+  const actual = evaluate(`(() => {
+    const samples = [[0,0,0], [255,255,255], [100,101,102], [47,115,195], [48,114,194]];
+    for (let r=0;r<=255;r+=17) for (let g=0;g<=255;g+=17) for (let b=0;b<=255;b+=17) samples.push([r,g,b]);
+    return samples.map(rgb => c('x', 'rgb(' + rgb.join(',') + ')'));
+  })()`, '256')
+  for (const [i, rgb] of samples.entries()) {
+    const index = Number(actual[i].match(/^\x1b\[38;5;(\d+)mx\x1b\[0m$/)?.[1])
+    assert.ok(index >= 16 && index <= 255)
+    const distance = color => color.reduce((sum, value, channel) => sum + (value - rgb[channel]) ** 2, 0)
+    assert.equal(distance(palette[index - 16]), Math.min(...palette.map(distance)), `RGB ${rgb}`)
+  }
+})
+
+test('16-color conversion preserves reference ANSI colors for foregrounds and backgrounds', () => {
+  const palette = [[0,0,0], [128,0,0], [0,128,0], [128,128,0], [0,0,128], [128,0,128], [0,128,128], [192,192,192],
+    [128,128,128], [255,0,0], [0,255,0], [255,255,0], [0,0,255], [255,0,255], [0,255,255], [255,255,255]]
+  for (const background of [false, true]) {
+    const actual = evaluate(`${JSON.stringify(palette)}.map(rgb => c('x', '${background ? 'bgrgb' : 'rgb'}(' + rgb.join(',') + ')'))`, '16')
+    assert.deepEqual(actual, palette.map((_, i) => `\x1b[${(i < 8 ? 30 + i : 90 + i - 8) + (background ? 10 : 0)}mx\x1b[0m`))
+  }
+})
