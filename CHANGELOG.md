@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 — 2026-09-18
+
+- Skip 16-color palette searches when formatting RGB colors for TrueColor or 256-color output.
+- Limit published files to the runtime, TypeScript declarations, changelog, README, license, and package metadata.
+- Require complete decimal integer components and an optional leading-only `#` for hex colors. Malformed RGB and background RGB styles are ignored; signed integers and clamping remain supported.
+
 ## 1.1.0 — 2026-09-12
 
 - Add `createColors({ level, stream })` for independent color configuration and stdout/stderr detection. Explicit levels override environment detection.

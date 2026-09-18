@@ -42,7 +42,7 @@ function getColorSupport(stream) {
 
 function hexToRgb(hex) {
   if (typeof hex !== 'string') return null
-  hex = hex.replace('#', '').toUpperCase()
+  hex = hex.replace(/^#/, '').toUpperCase()
   if ((hex.length !== 3 && hex.length !== 6) || !hexRegex.test(hex)) return null
   if (hex.length === 3) hex = hex.split('').map(c => c + c).join('')
   const num = parseInt(hex, 16)
@@ -77,16 +77,17 @@ function parseColor(part, regex, codes, colorSupport) {
   const v = part.match(regex)?.[1]?.trim()
   let r, g, b
   if (v?.includes(',')) {
-    const ps = v.split(',').map(n => parseInt(n.trim()))
-    if (ps.length === 3 && ps.every(n => !isNaN(n))) [r, g, b] = ps.map(x => Math.max(0, Math.min(255, x)))
+    const ps = v.split(',').map(n => n.trim())
+    if (ps.length === 3 && ps.every(n => /^[+-]?\d+$/.test(n))) [r, g, b] = ps.map(x => Math.max(0, Math.min(255, Number(x))))
   } else {
     const h = hexToRgb(v)
     if (h) { r = h.r; g = h.g; b = h.b }
   }
   if (r !== undefined && g !== undefined && b !== undefined) {
-    const idx = rgbTo16Color(r, g, b)
     const isFg = codes === fg16
-    return colorSupport.truecolor ? (isFg ? `\x1b[38;2;${r};${g};${b}m` : `\x1b[48;2;${r};${g};${b}m`) : colorSupport.colors256 ? `\x1b[${isFg ? 38 : 48};5;${rgbTo256Color(r, g, b)}m` : `\x1b[${codes[idx]}m`
+    if (colorSupport.truecolor) return `\x1b[${isFg ? 38 : 48};2;${r};${g};${b}m`
+    if (colorSupport.colors256) return `\x1b[${isFg ? 38 : 48};5;${rgbTo256Color(r, g, b)}m`
+    return `\x1b[${codes[rgbTo16Color(r, g, b)]}m`
   }
   return null
 }

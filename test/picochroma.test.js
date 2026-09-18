@@ -68,6 +68,31 @@ test('malformed RGB styles are ignored without throwing', () => {
 })
 
 
+test('RGB components reject partial numbers and misplaced hex markers across palettes', () => {
+  const invalid = ['12oops,0,0', '1.5,0,0', '1e2,0,0', '0x10,0,0', ',0,0',
+    '1,2,3,4', '1,2', 'NaN,0,0', 'Infinity,0,0', '+,0,0', '1 2,0,0',
+    'f#00', 'ff0000#', '##f00', '#ff', '#ffff', '#ggg']
+  const results = evaluate(`[16, 256, 'truecolor'].flatMap(level => {
+    const color = createColors({ level })
+    return ['rgb', 'bgrgb'].flatMap(prefix => ${JSON.stringify(invalid)}.flatMap(value => {
+      const format = prefix + '(' + value + ')'
+      return [color('x', format), color.style(format)('x'), color('x', 'bold ' + format)]
+    }))
+  })`)
+  assert.deepEqual(results, Array.from({ length: 3 * 2 * invalid.length },
+    () => ['x', 'x', '\x1b[1mx\x1b[0m']).flat())
+})
+
+test('signed decimal integers and valid hex forms preserve clamping for both color targets', () => {
+  const results = evaluate(`['rgb', 'bgrgb'].flatMap(prefix =>
+    ['+255, -1, 000', '999, 0, -999', '#f00', 'f00', '#FF0000', 'FF0000'].flatMap(value => {
+      const color = createColors({ level: 'truecolor' })
+      const format = prefix + '(' + value + ')'
+      return [color('x', format), color.style(format)('x')]
+    }))`)
+  assert.deepEqual(results, [38, 48].flatMap(code => Array(12).fill(`\x1b[${code};2;255;0;0mx\x1b[0m`)))
+})
+
 test('all named foregrounds, backgrounds, bright colors and effects', () => {
   const colors = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
   const cases = colors.flatMap((color, i) => [

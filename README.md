@@ -209,6 +209,8 @@ c('Text', 'rgb(255, 128, 0)')    // Spaces preserved in parsing
 c('Text', 'rgb(255,128,0)')      // Comma-separated values work fine
 ```
 
+Decimal components must be whole integers, with an optional `+` or `-` sign; values are clamped to 0–255. Fractions, exponents, and numeric suffixes are ignored as malformed styles. Hex colors accept three or six digits with an optional leading `#`. These rules also apply to `bgrgb()`.
+
 ### RGB Backgrounds
 
 Use `bgrgb()` to apply custom background colors (hex with or without `#`). Background colors also degrade gracefully:
