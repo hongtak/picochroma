@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.2 — 2026-09-21
+
+- Avoid splitting and joining styled text when it contains no full ANSI reset, while preserving nested style restoration.
+- Add `npm run bench` with optional baseline comparisons for direct calls, reusable styles, RGB palettes, nested text, long text, and disabled output.
+
 ## 1.1.1 — 2026-09-18
 
 - Skip 16-color palette searches when formatting RGB colors for TrueColor or 256-color output.

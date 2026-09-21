@@ -127,7 +127,8 @@ function compileStyle(colorSupport, format = '') {
 
 function applyStyle(opening, str) {
   if (!opening) return str
-  return opening + String(str).split(ansi.reset).join(ansi.reset + opening) + ansi.reset
+  const text = String(str)
+  return opening + (text.includes(ansi.reset) ? text.split(ansi.reset).join(ansi.reset + opening) : text) + ansi.reset
 }
 export function createColors({ level = 'auto', stream = 'stdout' } = {}) {
   if (![ 'auto', 0, 16, 256, 'truecolor' ].includes(level)) {

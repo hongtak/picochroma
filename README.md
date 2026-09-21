@@ -249,6 +249,17 @@ The signature is `c(text: string, format?: string): string`. Format strings rema
 
 Contributors can run `npm ci` followed by `npm test` to run runtime tests and strict type checks for NodeNext and bundler module resolution. TypeScript is a development dependency only; picochroma still has no runtime dependencies.
 
+### Benchmarks
+
+Run `npm run bench` to measure direct calls, reusable styles, RGB palettes, nested styles, long text, and disabled output. To compare a change against an earlier implementation:
+
+```bash
+git show HEAD:picochroma.js > /tmp/picochroma-baseline.mjs
+npm run bench -- /tmp/picochroma-baseline.mjs
+```
+
+Capture the baseline before committing the change being measured. The benchmark checks matching outputs, warms up each case, and reports median nanoseconds per operation across nine samples, alternating measurement order. A baseline/current ratio above 1 means the current implementation was faster. Timings include consuming the output and depend on the Node version, machine, and system load; run comparisons with other workloads stopped. They are diagnostic measurements, not CI performance thresholds.
+
 ### `c.style(format?)`
 
 Parse a format once and reuse the returned `(text: string) => string` function:
