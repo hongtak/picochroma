@@ -125,10 +125,52 @@ function compileStyle(colorSupport, format = '') {
   return styles.join('')
 }
 
+// Bold and dim share a reset; foreground/background RGB payloads are not SGR commands.
+function styleGroup(code) {
+  if (code === 1 || code === 2 || code === 22) return 22
+  if (code === 3 || code === 23) return 23
+  if (code === 4 || code === 24) return 24
+  if (code === 5 || code === 6 || code === 25) return 25
+  if (code === 7 || code === 27) return 27
+  if (code === 8 || code === 28) return 28
+  if (code === 9 || code === 29) return 29
+  if ((code >= 30 && code <= 39) || (code >= 90 && code <= 97)) return 39
+  if ((code >= 40 && code <= 49) || (code >= 100 && code <= 107)) return 49
+}
+
+function restoreStyles(text, opening) {
+  // Keep picochroma's own simple full-reset nesting on the inexpensive path.
+  if (!/\x1b\[(?!0m)(?:m|0{2,}m|(?:[\d:]*;)*(?:0|22|23|24|25|27|28|29|39|49)(?:;|m))/.test(text)) {
+    return text.includes(ansi.reset) ? text.split(ansi.reset).join(ansi.reset + opening) : text
+  }
+  const styles = [...opening.matchAll(/\x1b\[([\d;]+)m/g)]
+    .map(([escape, params]) => [escape, styleGroup(Number(params.split(';')[0]))])
+  return text.replace(/\x1b\[([\d;:]*)m/g, (escape, params) => {
+    const restore = new Set()
+    const codes = params.split(';')
+    for (let i = 0; i < codes.length; i++) {
+      const code = Number(codes[i].split(':')[0])
+      if (code === 0) {
+        for (const [, group] of styles) restore.add(group)
+      } else {
+        const group = styleGroup(code)
+        if (code === group) restore.add(group)
+        else restore.delete(group)
+        if ((code === 38 || code === 48 || code === 58) && !codes[i].includes(':')) {
+          const mode = Number(codes[i + 1])
+          if (mode === 2) i += 4
+          else if (mode === 5) i += 2
+        }
+      }
+    }
+    return escape + styles.filter(([, group]) => restore.has(group)).map(([style]) => style).join('')
+  })
+}
+
 function applyStyle(opening, str) {
   if (!opening) return str
   const text = String(str)
-  return opening + (text.includes(ansi.reset) ? text.split(ansi.reset).join(ansi.reset + opening) : text) + ansi.reset
+  return opening + (text.includes('\x1b[') ? restoreStyles(text, opening) : text) + ansi.reset
 }
 export function createColors({ level = 'auto', stream = 'stdout' } = {}) {
   if (![ 'auto', 0, 16, 256, 'truecolor' ].includes(level)) {

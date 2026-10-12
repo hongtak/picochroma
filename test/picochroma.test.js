@@ -290,3 +290,68 @@ test('reusable styles compile the format once, not on each call', () => {
     } finally { String.prototype.toLowerCase = original; }
   })()`), [1, 1])
 })
+
+test('external selective resets restore only the affected outer styles', () => {
+  const cases = [
+    ['red bg-white bold italic', '\x1b[39m', '\x1b[31m'],
+    ['red bg-white bold italic', '\x1b[49m', '\x1b[47m'],
+    ['bold dim red', '\x1b[22m', '\x1b[1m\x1b[2m'],
+    ['italic red', '\x1b[23m', '\x1b[3m'],
+    ['underline red', '\x1b[24m', '\x1b[4m'],
+    ['blink red', '\x1b[25m', '\x1b[5m'],
+    ['reverse red', '\x1b[27m', '\x1b[7m'],
+    ['hidden red', '\x1b[28m', '\x1b[8m'],
+    ['strikethrough red', '\x1b[29m', '\x1b[9m'],
+    ['red blue red', '\x1b[39m', '\x1b[31m\x1b[34m\x1b[31m'],
+    ['red bg-white bold', '\x1b[39;49;22m', '\x1b[31m\x1b[47m\x1b[1m'],
+    ['red bold', '\x1b[49m', '']
+  ]
+  assert.equal(evaluate(`(() => {
+    const color = createColors({ level: 16 });
+    return ${JSON.stringify(cases)}.every(([format, reset, restore]) => {
+      const opening = color('', format).slice(0, -4);
+      const text = 'before \\x1b[34minner' + reset + '\\n after';
+      const expected = opening + 'before \\x1b[34minner' + reset + restore + '\\n after\\x1b[0m';
+      return color(text, format) === expected && color.style(format)(text) === expected;
+    });
+  })()`), true)
+})
+
+test('alternate full resets and combined SGR commands respect later explicit styles', () => {
+  const opening = '\x1b[31m\x1b[47m\x1b[1m'
+  const cases = [
+    ['\x1b[m', opening], ['\x1b[00m', opening], ['\x1b[0;0m', opening],
+    ['\x1b[0;34m', '\x1b[47m\x1b[1m'],
+    ['\x1b[39;34m', ''], ['\x1b[34;39m', '\x1b[31m'],
+    ['\x1b[0;38;2;0;22;49m', '\x1b[47m\x1b[1m'],
+    ['\x1b[0;48;5;22m', '\x1b[31m\x1b[1m'],
+    ['\x1b[0;38:2::0:22:49m', '\x1b[47m\x1b[1m'],
+    ['\x1b[0;58;2;0;22;49m', opening],
+    ['\x1b[0;1m', '\x1b[31m\x1b[47m'],
+    ['\x1b[0;4:2m', opening]
+  ]
+  const actual = evaluate(`(() => {
+    const color = createColors({ level: 16 });
+    return ${JSON.stringify(cases)}.flatMap(([reset]) => {
+      const text = 'inside' + reset + ' after';
+      return [color(text, 'red bg-white bold'), color.style('red bg-white bold')(text)];
+    });
+  })()`)
+  assert.deepEqual(actual, cases.flatMap(([reset, restore]) =>
+    Array(2).fill(opening + 'inside' + reset + restore + ' after\x1b[0m')))
+})
+
+test('RGB outer colors restore across palettes while disabled output stays untouched', () => {
+  assert.equal(evaluate(`(() => {
+    for (const level of [0, 16, 256, 'truecolor']) {
+      const color = createColors({ level });
+      const text = 'inner\\x1b[39;49m tail\\x1b[2K';
+      const format = 'rgb(#abc) bgrgb(#123)';
+      const opening = level === 0 ? '' : color('', format).slice(0, -4);
+      const expected = level === 0 ? text : opening + 'inner\\x1b[39;49m' + opening + ' tail\\x1b[2K\\x1b[0m';
+      if (color(text, format) !== expected || color.style(format)(text) !== expected) return false;
+      if (color(text, 'unknown') !== text) return false;
+    }
+    return true;
+  })()`), true)
+})

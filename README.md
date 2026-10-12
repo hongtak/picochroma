@@ -173,6 +173,8 @@ Combine multiple styles using spaces or commas:
 
 Styles apply from left to right. If colors conflict, the last color wins, including RGB colors.
 
+When wrapping already styled text, outer styles resume after full ANSI resets (`ESC[0m` or `ESC[m`) and selective resets such as `ESC[39m` (foreground), `ESC[49m` (background), or `ESC[22m` (bold/dim). Selective resets restore only the affected outer styles. Explicit styles following a reset within the same SGR command take precedence.
+
 ```javascript
 console.log(c('Bold red text', 'bold red'))
 console.log(c('Bold green on white', 'bold green bg-white'))

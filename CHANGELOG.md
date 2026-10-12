@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.3 — 2026-10-12
+
+- Restore outer foregrounds, backgrounds, and text effects after selective ANSI resets in externally styled text.
+- Recognize alternate full resets and combined SGR commands, preserving explicit styles that follow a reset and treating extended-color payloads as color data.
+- Add regression coverage for direct and reusable styles across all color levels.
+
 ## 1.1.2 — 2026-09-21
 
 - Avoid splitting and joining styled text when it contains no full ANSI reset, while preserving nested style restoration.
