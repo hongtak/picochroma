@@ -97,7 +97,8 @@ function compileStyle(colorSupport, format = '') {
 
   const styles = []
   const fl = format.toLowerCase().trim()
-  const parts = fl.match(/(?:bgrgb|rgb)\([^)]*\)|[^\s,]+/g) || []
+  // An unterminated color expression consumes the remainder instead of leaking styles.
+  const parts = fl.match(/(?:bgrgb|rgb)\([^)]*(?:\)|$)|[^\s,]+/g) || []
 
   for (const part of parts) {
     if (ansi.fg[part]) { 

@@ -213,6 +213,8 @@ c('Text', 'rgb(255,128,0)')      // Comma-separated values work fine
 
 Decimal components must be whole integers, with an optional `+` or `-` sign; values are clamped to 0–255. Fractions, exponents, and numeric suffixes are ignored as malformed styles. Hex colors accept three or six digits with an optional leading `#`. These rules also apply to `bgrgb()`.
 
+Malformed `rgb()` and `bgrgb()` expressions are ignored through their closing `)`. If that closing parenthesis is missing, the rest of the format is ignored. Styles before the expression and after a closing parenthesis still apply: `italic rgb(nope bold) red` applies italic and red, while `italic rgb(nope bold` applies only italic.
+
 ### RGB Backgrounds
 
 Use `bgrgb()` to apply custom background colors (hex with or without `#`). Background colors also degrade gracefully:

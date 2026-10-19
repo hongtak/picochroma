@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.4 — 2026-10-19
+
+- Ignore unterminated `rgb()` and `bgrgb()` expressions through the end of the format, preventing their contents from accidentally applying named styles.
+- Document malformed-expression recovery and cover direct and reusable styles across all color levels.
+
 ## 1.1.3 — 2026-10-12
 
 - Restore outer foregrounds, backgrounds, and text effects after selective ANSI resets in externally styled text.

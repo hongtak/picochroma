@@ -355,3 +355,33 @@ test('RGB outer colors restore across palettes while disabled output stays untou
     return true;
   })()`), true)
 })
+
+test('malformed RGB expressions never expose their contents as style tokens', () => {
+  const invalid = ['(1,2,3 bold', '(nope bold', '(red, bg-blue, underline',
+    '(1,2,3\nbold', '(nope bold)', '(red, bg-blue, underline)'];
+  const actual = evaluate(`(() => {
+    return [0, 16, 256, 'truecolor'].flatMap(level => {
+      const color = createColors({ level });
+      return ['rgb', 'bgrgb', 'RGB', 'BGRGB'].flatMap(prefix =>
+        ${JSON.stringify(invalid)}.flatMap(suffix => {
+          const format = prefix + suffix;
+          return [color('x', format), color.style(format)('x'),
+            color('x', 'italic ' + format), color.style('italic ' + format)('x')];
+        }));
+    });
+  })()`)
+  assert.deepEqual(actual, [0, 16, 256, 'truecolor'].flatMap(level =>
+    Array.from({ length: 4 * invalid.length }, () =>
+      ['x', 'x', level === 0 ? 'x' : '\x1b[3mx\x1b[0m', level === 0 ? 'x' : '\x1b[3mx\x1b[0m']).flat()))
+})
+
+test('styles after a closed invalid RGB expression still apply', () => {
+  const actual = evaluate(`['rgb', 'bgrgb'].flatMap(prefix => {
+    const color = createColors({ level: 'truecolor' });
+    return ['(nope bold)', '()', '(1,2)', '(1,2,3 bold)'].flatMap(suffix => {
+      const format = 'italic ' + prefix + suffix + ', red bold';
+      return [color('x', format), color.style(format)('x')];
+    });
+  })`)
+  assert.deepEqual(actual, Array(16).fill('\x1b[3m\x1b[31m\x1b[1mx\x1b[0m'))
+})
