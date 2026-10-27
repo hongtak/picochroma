@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0 — 2026-10-27
+
+- Expose a read-only `level` property on the default export and every `createColors()` instance, reporting resolved support as `0`, `16`, `256`, or `'truecolor'`.
+- Add the `ResolvedColorLevel` TypeScript type and regression coverage for environment detection, stream selection, explicit overrides, and immutability.
+
 ## 1.1.4 — 2026-10-19
 
 - Ignore unterminated `rgb()` and `bgrgb()` expressions through the end of the format, preventing their contents from accidentally applying named styles.

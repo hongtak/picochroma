@@ -1,4 +1,4 @@
-import c, { createColors, type ColorOptions, type ColorLevel } from 'picochroma'
+import c, { createColors, type ColorOptions, type ColorLevel, type ResolvedColorLevel } from 'picochroma'
 
 const plain: string = c('Hello')
 const styled: string = c('Hello', 'bold red bg-white')
@@ -10,6 +10,12 @@ const nested: string = c('Before ' + c('inside', 'blue') + ' after', 'red')
 const level: ColorLevel = 'truecolor'
 const options: ColorOptions = { level, stream: 'stderr' }
 const instance: typeof c = createColors(options)
+const resolved: ResolvedColorLevel = instance.level
+const defaultLevel: 0 | 16 | 256 | 'truecolor' = c.level
+// @ts-expect-error The resolved level is read-only.
+instance.level = 0
+// @ts-expect-error Automatic detection always resolves to a concrete level.
+const unresolved: 'auto' = c.level
 const errorText: string = instance('Error', 'red bold')
 createColors()('Auto')
 createColors({ level: 0 })('Plain', 'red')

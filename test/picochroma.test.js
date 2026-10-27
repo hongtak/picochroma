@@ -385,3 +385,48 @@ test('styles after a closed invalid RGB expression still apply', () => {
   })`)
   assert.deepEqual(actual, Array(16).fill('\x1b[3m\x1b[31m\x1b[1mx\x1b[0m'))
 })
+
+test('level reports explicit palette settings and cannot be changed or redefined', () => {
+  const result = evaluate(`(() => {
+    return [0, 16, 256, 'truecolor'].map(level => {
+      const color = createColors({ level });
+      const before = color('x', 'rgb(#f00)');
+      const descriptor = Object.getOwnPropertyDescriptor(color, 'level');
+      return [color.level, Reflect.set(color, 'level', 0),
+        Reflect.defineProperty(color, 'level', { value: 'auto' }),
+        Reflect.deleteProperty(color, 'level'), descriptor.writable,
+        descriptor.configurable, color.level, color('x', 'rgb(#f00)') === before];
+    });
+  })()`, '1', { env: { NO_COLOR: '1' } })
+  assert.deepEqual(result, [0, 16, 256, 'truecolor'].map(level =>
+    [level, false, false, false, false, false, level, true]))
+})
+
+test('level resolves automatic detection for the default export and selected stream', () => {
+  const expression = "[c.level, createColors().level, createColors({ stream: 'stderr' }).level]"
+  const cases = [
+    [null, {}, [0, 0, 0]],
+    [null, { tty: true }, [16, 16, 0]],
+    [null, { stderrTTY: true }, [0, 0, 16]],
+    [null, { tty: true, stderrTTY: true, env: { TERM: 'xterm-256color' } }, [256, 256, 256]],
+    [null, { tty: true, env: { COLORTERM: 'truecolor' } }, ['truecolor', 'truecolor', 0]],
+    [null, { tty: true, env: { TERM: 'dumb' } }, [0, 0, 0]],
+    ['1', {}, ['truecolor', 'truecolor', 'truecolor']],
+    ['256', {}, [256, 256, 256]],
+    ['0', {}, [16, 16, 16]],
+    ['1', { tty: true, env: { NO_COLOR: '1' } }, [0, 0, 0]]
+  ]
+  for (const [force, options, expected] of cases) {
+    assert.deepEqual(evaluate(expression, force, options), expected)
+  }
+})
+
+test('level and output remain captured together when the environment changes', () => {
+  assert.deepEqual(evaluate(`(() => {
+    const first = createColors();
+    process.env.NO_COLOR = '1';
+    const second = createColors();
+    return [c.level, first.level, second.level,
+      first('x', 'red'), second('x', 'red')];
+  })()`), ['truecolor', 'truecolor', 0, '\x1b[31mx\x1b[0m', 'x'])
+})

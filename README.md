@@ -315,6 +315,19 @@ Detection is captured when `createColors()` is called. Create another instance t
 
 TypeScript users can import `ColorOptions` and `ColorLevel` as types alongside `createColors`.
 
+### `c.level`
+
+Read the resolved color support from the default export or any `createColors()` instance:
+
+```javascript
+const errors = createColors({ stream: 'stderr' })
+console.log(errors.level) // 0, 16, 256, or 'truecolor'
+```
+
+`level` is read-only and never returns `'auto'`. It reflects explicit configuration or automatic detection for the selected stream, including environment overrides. Like the instance's output settings, it is captured at creation time; create a new instance to detect later environment changes. Reusable formatters use their parent instance's level.
+
+TypeScript users can import the `ResolvedColorLevel` type for these four values.
+
 ### `c(text, format)`
 
 Styles the given text with the specified format.

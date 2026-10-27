@@ -184,6 +184,10 @@ export function createColors({ level = 'auto', stream = 'stdout' } = {}) {
     ? getColorSupport(typeof process === 'undefined' ? undefined : process[stream])
     : { supported: level !== 0, truecolor: level === 'truecolor', colors256: level === 256 || level === 'truecolor' }
   const color = (text, format) => applyStyle(compileStyle(colorSupport, format), text)
+  Object.defineProperty(color, 'level', {
+    value: !colorSupport.supported ? 0 : colorSupport.truecolor ? 'truecolor' : colorSupport.colors256 ? 256 : 16,
+    enumerable: true
+  })
   color.style = (format = '') => {
     const opening = compileStyle(colorSupport, format)
     return text => applyStyle(opening, text)

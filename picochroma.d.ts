@@ -17,6 +17,8 @@ export type StyleFunction = (text: string) => string;
 
 /** A styling function with a reusable style factory. */
 export interface Colors {
+  /** Resolved color support, captured when this instance is created. */
+  readonly level: ResolvedColorLevel;
   /** Apply a format to text; the last conflicting color wins. */
   (text: string, format?: string): string;
   /** Parse a format once using this instance's color settings, then reuse it. */
@@ -24,7 +26,10 @@ export interface Colors {
 }
 
 /** Automatic detection, disabled styling, or an explicit palette. */
-export type ColorLevel = 'auto' | 0 | 16 | 256 | 'truecolor';
+export type ColorLevel = 'auto' | ResolvedColorLevel;
+
+/** A detected or explicit palette; never 'auto'. */
+export type ResolvedColorLevel = 0 | 16 | 256 | 'truecolor';
 
 export interface ColorOptions {
   /** Explicit levels override environment variables and TTY detection. Default: 'auto'. */
